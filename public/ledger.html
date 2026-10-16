@@ -651,6 +651,18 @@ function driveDirectLink(url){
   if(m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w300`;
   return url;
 }
+  function logoFor(row){
+  // 1) your manual logo wins
+  const manual = logoFor(row);
+  if(manual) return manual;
+  // 2) otherwise use the favicon of the startup's website
+  const site = clean(row['Website URL']);
+  if(!site) return null;
+  try{
+    const host = new URL(site.startsWith('http') ? site : 'https://' + site).hostname;
+    return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
+  }catch(e){ return null; }
+}
 
 function initials(name){
   return name.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -674,7 +686,7 @@ function render(list){
   list.forEach(row=>{
     const card = document.createElement('div');
     card.className = 'card';
-    const logoUrl = driveDirectLink(row['Logo URL']);
+    const logoUrl = logoFor(row);
     const featured = clean(row['Featured']).toLowerCase() === 'yes';
     const stage = clean(row['Funding Stage']);
     card.innerHTML = `
@@ -704,7 +716,7 @@ function render(list){
 }
 
 function openModal(row){
-  const logoUrl = driveDirectLink(row['Logo URL']);
+  const logoUrl = logoFor(row);
   const tags = splitList(row['Tags']);
   const investors = splitList(row['Key Investors']);
   const tech = splitList(row['Underlying Tech']);
@@ -852,7 +864,7 @@ function showListModal(title, matches){
     rowsWrap.innerHTML = `<div class="empty" style="padding:30px 0;">No startups found.</div>`;
   } else {
     matches.forEach(row=>{
-      const logoUrl = driveDirectLink(row['Logo URL']);
+      const logoUrl = logoFor(row);
       const r = document.createElement('div');
       r.className = 'list-row';
       r.innerHTML = `
@@ -1023,7 +1035,7 @@ function openFounderPopup(name){
       r.className = 'list-row';
 
       if(matchingStartup){
-        const logoUrl = driveDirectLink(matchingStartup['Logo URL']);
+        const logoUrl = logoFor(matchingStartup);
         r.innerHTML = `
           ${logoUrl ? `<img class="logo" src="${logoUrl}" onerror="this.outerHTML='<div class=logo-fallback>${initials(matchingStartup['Startup Name'])}</div>'">` : `<div class="logo-fallback">${initials(matchingStartup['Startup Name'])}</div>`}
           <div class="list-row-info">
@@ -1167,7 +1179,7 @@ function buildFeaturedCarousel(data){
   const total = list.length;
 
   list.forEach((row, i)=>{
-    const logoUrl = driveDirectLink(row['Logo URL']);
+    const logoUrl = logoFor(row);
     const el = document.createElement('div');
     el.className = 'feat-card';
     el.innerHTML = `
