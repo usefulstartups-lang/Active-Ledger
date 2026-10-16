@@ -651,9 +651,10 @@ function driveDirectLink(url){
   if(m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w300`;
   return url;
 }
-  function logoFor(row){
+function logoFor(row){
   // 1) your manual logo wins
-  const manual = driveDirectLink(row['Logo URL']);  if(manual) return manual;
+  const manual = driveDirectLink(row['Logo URL']);
+  if(manual) return manual;
   // 2) otherwise use the favicon of the startup's website
   const site = clean(row['Website URL']);
   if(!site) return null;
