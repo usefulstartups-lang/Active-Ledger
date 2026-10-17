@@ -1,5 +1,5 @@
 // Change this to your website's address (used in the share message).
-const SITE_URL = 'https://sites.google.com/view/usefulstartups/';
+const SITE_URL = 'https://usefulstartups.com/';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
