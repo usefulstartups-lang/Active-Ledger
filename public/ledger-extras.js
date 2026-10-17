@@ -73,6 +73,16 @@ const css=`
 .hm-body{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:start}
 .hm.closed .hm-body,.hm.closed .hm-foot{display:none}
 .hm-map{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;max-width:560px;width:100%}
+.hm-map.geo{display:block;max-width:520px}
+.hm-svg{width:100%;height:auto;display:block}
+.hm-st .u{fill:#0B1220;stroke:#0B1220;stroke-width:2.2;stroke-linejoin:round}
+.hm-st .o{stroke-width:1;stroke-linejoin:round;transition:filter .15s}
+.hm-st.has{cursor:pointer}
+.hm-st.has:hover .u{stroke:#F2EFE9}
+.hm-st.has:hover .o{filter:brightness(1.18)}
+.hm-pin{pointer-events:none}
+.hm-pin circle{fill:#0B1220;stroke:#D9A441;stroke-width:1}
+.hm-pin text{fill:#F2EFE9;font:600 8.5px 'IBM Plex Mono',monospace;text-anchor:middle;dominant-baseline:central}
 .hm-tile{aspect-ratio:1/1;border:1px solid var(--rule);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:default;transition:transform .15s,border-color .15s;position:relative;user-select:none}
 .hm-tile b{font:600 clamp(11px,1.6vw,15px) 'IBM Plex Mono',monospace;line-height:1}
 .hm-tile span{font:9px 'IBM Plex Mono',monospace;letter-spacing:.04em;opacity:.75}
@@ -114,22 +124,64 @@ document.getElementById("hmToggle").onclick=function(){const c=sec.classList.tog
 
 function open(title,rows){if(typeof showListModal==="function"&&rows.length)showListModal(title,rows)}
 
-let lastAll=null,lastLen=-1;
-function draw(){
-  if(typeof ALL==="undefined"||!ALL)return;
-  if(ALL===lastAll&&ALL.length===lastLen)return;
-  lastAll=ALL;lastLen=ALL.length;
-  const by={},cities={},unplaced={};
-  Object.keys(TILES).forEach(k=>by[k]={rows:[],sectors:{}});
-  ALL.forEach(r=>{
-    const hq=cl(r["Headquarters"]);const s=stateOf(hq);
-    if(!s){if(hq)unplaced[hq]=(unplaced[hq]||0)+1;return}
-    by[s].rows.push(r);
-    const sec=cl(r["Sector"]);if(sec)by[s].sectors[sec]=(by[s].sectors[sec]||0)+1;
-    cities[hq]=cities[hq]||{n:0,rows:[]};cities[hq].n++;cities[hq].rows.push(r);
+// ---- Real India map: state boundaries come from an open dataset (district polygons grouped by state) ----
+const GEO_URL="https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@2884453/geojson/india.geojson";
+const CK="hm_geo_v1";
+let geo=null,geoState="idle";
+const mixc=t=>{const a=[26,35,56],b=[217,164,65];return"rgb("+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(",")+")"};
+function buildGeo(gj){
+  const X=lon=>(lon-68)*18.7,Y=lat=>(37.6-lat)*20,out={};
+  gj.features.forEach(f=>{
+    const pr=f.properties||{};
+    const st=stateOf(pr.st_nm||pr.ST_NM||pr.NAME_1||pr.name||"");
+    if(!st||!f.geometry)return;
+    const polys=f.geometry.type==="Polygon"?[f.geometry.coordinates]:f.geometry.coordinates;
+    const o=out[st]||(out[st]={d:"",A:0,sx:0,sy:0,x0:1e9,x1:-1e9});
+    polys.forEach(poly=>poly.forEach((ring,ri)=>{
+      const pts=[];let lx=-99,ly=-99;
+      ring.forEach(p=>{const x=X(p[0]),y=Y(p[1]);if(Math.abs(x-lx)+Math.abs(y-ly)<0.8)return;lx=x;ly=y;pts.push([x,y])});
+      if(pts.length<3)return;
+      o.d+="M"+pts.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")+"Z";
+      if(ri)return; // exterior rings only, for the label position
+      let a=0,cx=0,cy=0;
+      for(let i=0;i<pts.length;i++){const[p,q]=[pts[i],pts[(i+1)%pts.length]],c=p[0]*q[1]-q[0]*p[1];a+=c;cx+=(p[0]+q[0])*c;cy+=(p[1]+q[1])*c;if(p[0]<o.x0)o.x0=p[0];if(p[0]>o.x1)o.x1=p[0]}
+      a/=2;if(Math.abs(a)<0.01)return;
+      o.A+=Math.abs(a);o.sx+=Math.abs(a)*cx/(6*a);o.sy+=Math.abs(a)*cy/(6*a);
+    }));
   });
-  const max=Math.max(1,...Object.values(by).map(v=>v.rows.length));
-  const map=document.getElementById("hmMap");map.innerHTML="";
+  Object.values(out).forEach(o=>{o.cx=+(o.sx/o.A).toFixed(1);o.cy=+(o.sy/o.A).toFixed(1);delete o.sx;delete o.sy;delete o.A});
+  return out;
+}
+function loadGeo(){
+  if(geoState!=="idle")return;
+  geoState="loading";
+  try{const c=JSON.parse(localStorage.getItem(CK));if(c&&c.v===1&&c.s){geo=c.s;geoState="ready";return}}catch(e){}
+  fetch(GEO_URL).then(r=>{if(!r.ok)throw 0;return r.json()}).then(gj=>{
+    geo=buildGeo(gj);if(Object.keys(geo).length<20)throw 0;geoState="ready";
+    try{localStorage.setItem(CK,JSON.stringify({v:1,s:geo}))}catch(e){}
+  }).catch(()=>{geoState="failed"}).then(()=>{lastAll=null;draw()});
+}
+function showTip(e,name,by){
+  const n=by[name].rows.length,top=Object.entries(by[name].sectors).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]).join(", ");
+  tip.innerHTML=`<b>${esc(name)}</b>${n} startup${n===1?"":"s"}${top?`<small>${esc(top)}</small>`:""}`;tip.style.display="block";
+  tip.style.left=Math.min(e.clientX+14,window.innerWidth-250)+"px";tip.style.top=(e.clientY+14)+"px";
+}
+function drawGeo(by,max){
+  const map=document.getElementById("hmMap");map.className="hm-map geo";
+  let g="",p="";
+  Object.entries(geo).forEach(([name,o])=>{
+    const n=(by[name]||{rows:[]}).rows.length,c=n?mixc(0.2+0.8*Math.sqrt(n/max)):"#1a2338";
+    g+=`<g class="hm-st${n?" has":""}" data-s="${esc(name)}"><path class="u" d="${o.d}"/><path class="o" d="${o.d}" style="fill:${c};stroke:${c}"/></g>`;
+    if(n)p+=`<g class="hm-pin"><circle cx="${o.cx}" cy="${o.cy}" r="${n>99?10:8.5}"/><text x="${o.cx}" y="${o.cy}">${n}</text></g>`;
+  });
+  map.innerHTML=`<svg class="hm-svg" viewBox="0 0 560 640" role="img" aria-label="Map of India showing startups per state">${g}${p}</svg>`;
+  const svg=map.firstChild,st=e=>e.target.closest&&e.target.closest(".hm-st");
+  svg.addEventListener("mousemove",e=>{const s=st(e);if(s&&by[s.dataset.s])showTip(e,s.dataset.s,by);else tip.style.display="none"});
+  svg.addEventListener("mouseleave",()=>tip.style.display="none");
+  svg.addEventListener("click",e=>{const s=st(e);if(s&&by[s.dataset.s]){tip.style.display="none";open("State — "+s.dataset.s,by[s.dataset.s].rows)}});
+}
+function drawTiles(by,max){
+  const map=document.getElementById("hmMap");map.className="hm-map";map.innerHTML="";
   Object.entries(TILES).forEach(([name,[c,r,code]])=>{
     const n=by[name].rows.length,a=n?0.16+0.8*Math.sqrt(n/max):0;
     const t=document.createElement("div");
@@ -137,14 +189,32 @@ function draw(){
     t.style.gridColumn=c+1;t.style.gridRow=r+1;
     if(n){t.style.background=`rgba(217,164,65,${a.toFixed(2)})`;t.style.color=a>0.5?"#0B1220":"#F2EFE9"}
     t.innerHTML=`<b>${n||""}</b><span>${code}</span>`;
-    t.setAttribute("aria-label",`${name}: ${n} startups`);
-    const show=e=>{const top=Object.entries(by[name].sectors).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]).join(", ");
-      tip.innerHTML=`<b>${esc(name)}</b>${n} startup${n===1?"":"s"}${top?`<small>${esc(top)}</small>`:""}`;tip.style.display="block";
-      tip.style.left=Math.min(e.clientX+14,window.innerWidth-250)+"px";tip.style.top=(e.clientY+14)+"px"};
-    t.addEventListener("mousemove",show);t.addEventListener("mouseleave",()=>tip.style.display="none");
+    t.addEventListener("mousemove",e=>showTip(e,name,by));t.addEventListener("mouseleave",()=>tip.style.display="none");
     t.addEventListener("click",()=>{tip.style.display="none";open("State — "+name,by[name].rows)});
     map.appendChild(t);
   });
+}
+
+let lastAll=null,lastLen=-1,lastMode="";
+function draw(){
+  if(typeof ALL==="undefined"||!ALL)return;
+  loadGeo();
+  const mode=geoState==="ready"?"geo":geoState==="failed"?"tile":"wait";
+  if(ALL===lastAll&&ALL.length===lastLen&&mode===lastMode)return;
+  lastAll=ALL;lastLen=ALL.length;lastMode=mode;
+  const by={},cities={},unplaced={};
+  Object.keys(TILES).forEach(k=>by[k]={rows:[],sectors:{}});
+  ALL.forEach(r=>{
+    const hq=cl(r["Headquarters"]);const s=stateOf(hq);
+    if(!s){if(hq)unplaced[hq]=(unplaced[hq]||0)+1;return}
+    by[s].rows.push(r);
+    const sc=cl(r["Sector"]);if(sc)by[s].sectors[sc]=(by[s].sectors[sc]||0)+1;
+    cities[hq]=cities[hq]||{n:0,rows:[]};cities[hq].n++;cities[hq].rows.push(r);
+  });
+  const max=Math.max(1,...Object.values(by).map(v=>v.rows.length));
+  if(mode==="geo")drawGeo(by,max);
+  else if(mode==="tile")drawTiles(by,max);
+  else document.getElementById("hmMap").innerHTML='<div style="color:var(--paper-dim);font:12px \'IBM Plex Mono\',monospace;padding:40px 0">Loading map…</div>';
   const list=(id,items,total)=>{document.getElementById(id).innerHTML=items.map(([nm,n,rows])=>`<li data-i="${esc(nm)}"><span class="hm-nm">${esc(nm)}</span><span class="hm-num">${n}</span><span class="hm-bar"><i style="width:${Math.max(4,n/total*100)}%"></i></span></li>`).join("")||`<li style="cursor:default;color:var(--paper-dim)">No data yet</li>`};
   const ts=Object.entries(by).map(([k,v])=>[k,v.rows.length,v.rows]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const tc=Object.entries(cities).map(([k,v])=>[k,v.n,v.rows]).sort((a,b)=>b[1]-a[1]).slice(0,8);
