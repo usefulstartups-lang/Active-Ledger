@@ -69,7 +69,7 @@ async function runGeneral(supabase) {
 async function runStartups(supabase, q) {
   let names = [];
   try {
-    const res = await fetch(process.env.LEDGER_CSV_URL || DEFAULT_LEDGER_CSV);
+      const res = await fetch(process.env.LEDGER_CSV_URL || DEFAULT_LEDGER_CSV, { signal: AbortSignal.timeout(15000) });
     const rows = Papa.parse(await res.text(), { header: true, skipEmptyLines: true }).data;
     names = [...new Set(rows.map((r) => (r['Startup Name'] || '').trim()).filter((n) => n && n !== '-'))];
   } catch (err) {
