@@ -1,0 +1,37 @@
+   name: Fetch news
+
+   on:
+     schedule:
+       - cron: '7 * * * *'
+     workflow_dispatch:
+       inputs:
+         only:
+           description: 'Type general or startups, or leave blank for both'
+           required: false
+           default: ''
+         offset:
+           description: 'Startup list start position (blank = automatic rotation)'
+           required: false
+           default: ''
+         batch:
+           description: 'How many startups to check (blank = 15)'
+           required: false
+           default: ''
+
+   jobs:
+     fetch:
+       runs-on: ubuntu-latest
+       timeout-minutes: 10
+       steps:
+         - uses: actions/checkout@v4
+         - uses: actions/setup-node@v4
+           with:
+             node-version: 20
+         - run: npm install --omit=dev
+         - run: node scripts/run-fetch.js
+           env:
+             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+             SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+             ONLY: ${{ github.event.inputs.only }}
+             OFFSET: ${{ github.event.inputs.offset }}
+             BATCH: ${{ github.event.inputs.batch }}
