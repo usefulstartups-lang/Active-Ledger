@@ -29,7 +29,7 @@ body.ul-page ::selection{background:var(--gold);color:var(--ink)}
 .ul-foot a.ul-soc{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--rule);background:var(--ink2);color:var(--paper);padding:0;transition:background .2s,color .2s,transform .2s,border-color .2s}
 .ul-foot a.ul-soc:hover{background:var(--gold);color:var(--ink);border-color:var(--gold);transform:translateY(-3px)}
 .ul-soc svg{width:18px;height:18px}
-.ul-ct{display:flex;gap:12px;align-items:flex-start;color:var(--dim);font-size:15px;line-height:1.55;padding:7px 0}
+.ul-foot .ul-ct,.ul-foot a.ul-ct{display:flex;gap:12px;align-items:flex-start;color:var(--dim);font-size:15px;line-height:1.55;padding:7px 0}
 .ul-ct i{flex:0 0 18px;width:18px;height:18px;margin-top:3px;color:var(--gold)}
 .ul-ct svg{width:18px;height:18px;display:block}
 .ul-ct span{min-width:0;overflow-wrap:anywhere}

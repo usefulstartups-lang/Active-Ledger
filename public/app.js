@@ -1,4 +1,11 @@
+// Change this to your website's address (used in the share message).
+const SITE_URL = 'https://sites.google.com/view/usefulstartups/';
+
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Which news tab is showing: 'general' (startup & business news) or 'startup' (news on Ledger startups).
+let currentCat = location.hash === '#our-startups' ? 'startup' : 'general';
+let loadId = 0;
 
 // A stable anonymous ID per browser, so likes/comments persist for a visitor
 // without requiring login.
@@ -17,11 +24,18 @@ const storyTpl = document.getElementById('story-template');
 const commentTpl = document.getElementById('comment-template');
 
 async function loadFeed() {
-  const { data: articles, error } = await sb
+  const myLoad = ++loadId;
+  const isStartup = currentCat === 'startup';
+  feedEl.innerHTML = `<p class="loading">Loading the latest stories…</p>`;
+
+  const { data: raw, error } = await sb
     .from('articles')
     .select('*')
+    .eq('category', currentCat)
     .order('published_at', { ascending: false })
-    .limit(30);
+    .limit(isStartup ? 150 : 30);
+
+  if (myLoad !== loadId) return; // a newer tab click took over
 
   if (error) {
     feedEl.innerHTML = `<p class="loading">Couldn't load stories. Check your Supabase config in config.js.</p>`;
@@ -29,8 +43,17 @@ async function loadFeed() {
     return;
   }
 
+  let articles = raw;
+  if (isStartup) {
+    // Variety: at most 2 stories per startup so one company can't fill the page.
+    const seen = {};
+    articles = raw.filter((a) => (seen[a.startup_name] = (seen[a.startup_name] || 0) + 1) <= 2).slice(0, 30);
+  }
+
   if (!articles.length) {
-    feedEl.innerHTML = `<p class="loading">No stories yet — the fetcher runs hourly, check back soon.</p>`;
+    feedEl.innerHTML = isStartup
+      ? `<p class="loading">No news about Ledger startups yet — the fetcher checks a few companies every hour, check back soon.</p>`
+      : `<p class="loading">No stories yet — the fetcher runs hourly, check back soon.</p>`;
     return;
   }
 
@@ -55,7 +78,8 @@ function renderStory(article, likes, comments) {
   img.src = article.image_url || '';
   img.alt = article.title;
 
-  node.querySelector('.story-source').textContent = article.source;
+  node.querySelector('.story-source').textContent =
+    article.category === 'startup' && article.startup_name ? `${article.startup_name} · ${article.source}` : article.source;
   node.querySelector('.story-time').textContent = timeAgo(article.published_at);
 
   const titleLink = node.querySelector('.story-title a');
@@ -137,7 +161,7 @@ function renderComment(c) {
 }
 
 function buildShareMessage(article) {
-  return `${article.title}\n${article.link}\n\nFor more such content, visit Useful Startups: https://sites.google.com/view/usefulstartups/`;
+  return `${article.title}\n${article.link}\n\nFor more such content, visit Useful Startups: ${SITE_URL}`;
 }
 
 function handleShare(platform, article, btnEl) {
@@ -215,5 +239,16 @@ function timeAgo(dateStr) {
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
 }
+
+// ---- News tabs ----
+document.querySelectorAll('.news-tab').forEach((btn) => {
+  btn.classList.toggle('active', btn.dataset.cat === currentCat);
+  btn.addEventListener('click', () => {
+    currentCat = btn.dataset.cat;
+    history.replaceState(null, '', currentCat === 'startup' ? '#our-startups' : location.pathname);
+    document.querySelectorAll('.news-tab').forEach((b) => b.classList.toggle('active', b === btn));
+    loadFeed();
+  });
+});
 
 loadFeed();
