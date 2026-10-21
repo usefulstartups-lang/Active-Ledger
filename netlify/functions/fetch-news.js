@@ -71,8 +71,8 @@ async function runStartups(supabase, q) {
   try {
       const res = await fetch(process.env.LEDGER_CSV_URL || DEFAULT_LEDGER_CSV, { signal: AbortSignal.timeout(15000) });
     const rows = Papa.parse(await res.text(), { header: true, skipEmptyLines: true }).data;
-    names = [...new Set(rows.map((r) => (r['Startup Name'] || '').trim()).filter((n) => n && n !== '-'))];
-  } catch (err) {
+   const hidden = (r) => /^(no|false|0|hide|hidden)$/i.test((r['Visible'] || '').trim());
+    names = [...new Set(rows.filter((r) => !hidden(r)).map((r) => (r['Startup Name'] || '').trim()).filter((n) => n && n !== '-'))];
     console.error('Could not read the Ledger sheet:', err.message);
     return { inserted: 0, checked: [] };
   }
