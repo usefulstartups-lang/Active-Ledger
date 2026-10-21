@@ -155,7 +155,7 @@ async function homeData(){
  let rows=[];
  try{await loadScript("https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js");
   const t=await fetch(`${SHEET}?gid=${GIDS.ledger}&single=true&output=csv`,{cache:"no-store"}).then(r=>r.text());
-  rows=Papa.parse(t,{header:true,skipEmptyLines:true}).data.filter(r=>clean(r["Startup Name"]))}catch(e){}
+  rows=Papa.parse(t,{header:true,skipEmptyLines:true}).data.filter(r=>clean(r["Startup Name"])&&vis(r))
  document.querySelectorAll("#ulStats b[data-v='auto:startups']").forEach(b=>{b.dataset.v=rows.length?String(rows.length):"—"; b.textContent=b.dataset.v});
  const f=rows.filter(r=>clean(r.Featured).toLowerCase()==="yes").slice(0,3);
  if(f.length){$("#ulFeat").hidden=false;$("#ulFeatGrid").innerHTML=f.map(r=>`<a class="ul-card rv" href="ledger.html"><span class="ul-meta">${esc(clean(r.Sector))} · ${esc(clean(r.Headquarters))}</span><h3>${esc(r["Startup Name"])}</h3><p>${esc(r["Tagline / Description"])}</p><span class="ul-more">${esc(clean(r["Funding Amount"])||"Undisclosed")} · ${esc(clean(r["Funding Stage"]))}</span></a>`).join("")}
