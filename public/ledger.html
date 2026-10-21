@@ -1143,7 +1143,7 @@ function buildStats(data){
 
 function parseCsvText(text){
   const results = Papa.parse(text, { header: true, skipEmptyLines: true });
-  ALL = results.data.filter(r => clean(r['Startup Name']));
+  ALL = results.data.filter(r => clean(r['Startup Name']) && !/^(no|false|0|hide|hidden)$/i.test((r['Visible'] || '').trim()));
   populateFilters(ALL);
   buildTicker(ALL);
   buildStats(ALL);
