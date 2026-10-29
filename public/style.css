@@ -243,3 +243,4 @@ body {
 }
 .news-tab:hover { border-color: var(--amber); color: var(--ink); }
 .news-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+   .ul-mark:has(img){border:0;border-radius:7px}
