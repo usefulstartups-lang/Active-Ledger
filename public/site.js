@@ -68,6 +68,7 @@ function head(){
  const add=(tag,attrs)=>{const e=document.createElement(tag);Object.assign(e,attrs);document.head.appendChild(e)};
  add("link",{rel:"stylesheet",href:"site.css"});
  add("link",{rel:"icon",type:"image/svg+xml",href:"favicon.svg"});  
+      add("link",{rel:"apple-touch-icon",href:"apple-touch-icon.png"});
  add("link",{rel:"stylesheet",href:"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"});
 }
 function shell(S,nav){
