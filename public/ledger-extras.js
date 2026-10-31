@@ -288,8 +288,8 @@ fixNames();
    Paste the published-CSV link of your "Unlisted Shares" sheet below. Its first column (or a column named
    "Startup Name") holds the company names you can supply. Optional columns: Also Known As, Indicative Price,
    Min Investment, Visible. */
-const UNLISTED_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3_m-l_xoMvD0gkiOofbQ2eq6L-o_vLxns26bq1qqQTP6m65ynI8owe8ZUOjos7j6cmK-4O_gEfIB8/pub?output=csv";
-const OAK={name:"Oak Sprouts",email:"team.oaksprouts@gmail.com",phone:"+91 77889 90390",whatsapp:"917788990390",website:"https://www.oaksprouts.com/"};
+const UNLISTED_CSV_URL="";
+const OAK={name:"Oak Sprouts",email:"team.oaksprouts@gmail.com",phone:"+91 77889 90390",whatsapp:"917788990390",website:"https://oaksprouts.com"};
 const nk=s=>String(s||"").toLowerCase().replace(/\b(pvt|private|ltd|limited|llp|inc)\b/g," ").replace(/[^a-z0-9]/g,"");
 let UNL=null;
 const unlName=r=>cl(r["Startup Name"])||cl(r["Company Name"])||cl(r["Name"])||cl(Object.values(r)[0]);
@@ -309,7 +309,7 @@ const wa=msg=>`https://wa.me/${OAK.whatsapp}?text=${encodeURIComponent(msg)}`;
 function bar(row,s){
   const b=document.createElement("div");b.className="us-bar";
   b.innerHTML=s==="avail"?`<button type="button" class="us-chip avail">Unlisted shares available</button><span class="us-sub">via ${esc(OAK.name)}</span>`
-    :`<button type="button" class="us-chip req">Not listed yet · we can find it</button>`;
+    :`<button type="button" class="us-chip req">Want to buy unlisted shares?</button>`;
   b.querySelector("button").addEventListener("click",e=>{e.stopPropagation();openUnl(row,s)});
   return b;
 }
@@ -333,7 +333,7 @@ function openUnl(row,s){
       <p class="us-note">${DISC}</p>`;
   }else{
     m.innerHTML=`<button class="modal-close" id="unlX">&times;</button><h2>Want ${name} unlisted shares?</h2>
-      <p class="modal-tagline">We don't have ${name} listed right now, but ${esc(OAK.name)} can try to source it. Tell us a little and we'll check availability and get back to you.</p>
+      <p class="modal-tagline">${name} unlisted shares aren't available with ${esc(OAK.name)} at the moment, but we can find them for you if you're interested. Tell us a little and we'll check availability and get back to you.</p>
       <form id="unlForm"><div class="form-field"><label>Your name</label><input type="text" name="n" required></div>
       <div class="form-field"><label>Phone or email</label><input type="text" name="c" required></div>
       <div class="form-field"><label>Roughly how much do you want to invest? (optional)</label><input type="text" name="a" placeholder="e.g. ₹5 lakh"></div>

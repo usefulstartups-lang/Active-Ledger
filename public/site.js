@@ -18,6 +18,9 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  privacy_title:"Privacy Policy",privacy_intro:"What we collect and why.",
  legal_updated:"",contact_email:"hello@example.com",contact_phone:"",address:"",
  linkedin:"",twitter:"",instagram:"",facebook:"",youtube:"",discord:"",blog:"",whatsapp:"",contact_form_url:"",logo_url:"",
+ oak_show:"yes",oak_name:"Oak Sprouts",oak_url:"https://oaksprouts.com",oak_logo:"oaksprouts-logo.png",oak_cta:"Visit oaksprouts.com",
+ oak_text:"A startup of our co-founders that manages startup portfolios, with startup investing, seed funding, angel investing and unlisted opportunities.",
+ oak_badge:"Useful Startups is part of the Oak Sprouts portfolio",
  footer_blurb:"Tracking India's startups, one row at a time.",copyright:"© 2026 Useful Startups. All rights reserved."},
 nav:[{Label:"Home",URL:"index.html",Location:"header",Order:1},{Label:"Ledger",URL:"ledger.html",Location:"both",Group:"Directories",Order:2},
  {Label:"News",URL:"news.html",Location:"both",Group:"Resources",Order:3},{Label:"About",URL:"about.html",Location:"both",Group:"Company",Order:4},
@@ -103,7 +106,8 @@ function shell(S,nav){
   [S.address&&"-",S.address,sv('<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>')]];
  const ct=ctRows.filter(r=>r[1]).map(r=>{const inner=`<i>${r[2]}</i><span>${esc(r[1])}</span>`;return r[0]==="-"?`<div class="ul-ct">${inner}</div>`:`<a class="ul-ct" href="${esc(url(r[0]))}"${/^https/.test(r[0])?' target="_blank" rel="noopener"':""}>${inner}</a>`}).join("");
  const ft=document.createElement("div");ft.className="ul-foot";
- ft.innerHTML=`<div class="ul-foot-in"><div class="ul-fb">${brand}<p>${esc(S.footer_blurb)}</p><div class="ul-socs">${soc}</div></div>
+const oak=S.oak_url&&!/^(no|false|0|hide)$/i.test(S.oak_show)?`<div class="ul-oak"><div class="ul-oak-in"><div class="ul-oak-logo">${S.oak_logo?`<img src="${esc(drive(S.oak_logo))}" alt="${esc(S.oak_name)} logo" loading="lazy">`:""}</div><div class="ul-oak-body"><h3>${esc(S.oak_name)}</h3><p>${esc(S.oak_text)}</p>${S.oak_badge?`<span class="ul-oak-badge">${esc(S.oak_badge)}</span>`:""}</div><a class="ul-oak-cta" href="${esc(url(S.oak_url))}" target="_blank" rel="noopener">${esc(S.oak_cta)} <span aria-hidden="true">→</span></a></div></div>`:"";
+  ft.innerHTML=oak+`<div class="ul-foot-in"><div class="ul-fb">${brand}<p>${esc(S.footer_blurb)}</p><div class="ul-socs">${soc}</div></div>
  <div class="ul-groups">${cols}</div><div><h4>Get in touch</h4>${ct}</div></div>
  <div class="ul-copy"><span>${esc(S.copyright)}</span><a href="#" style="display:inline" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">Back to top</a></div>`;
  document.body.appendChild(ft);
@@ -161,7 +165,9 @@ async function homeData(){
   rows=Papa.parse(t,{header:true,skipEmptyLines:true}).data.filter(r=>clean(r["Startup Name"])&&vis(r))}catch(e){}
  document.querySelectorAll("#ulStats b[data-v='auto:startups']").forEach(b=>{b.dataset.v=rows.length?String(rows.length):"—"; b.textContent=b.dataset.v});
  const tp=$("#ulTapeIn");
- if(tp&&rows.length){const h=rows.slice(0,40).map(r=>`<span><b>${esc(r["Startup Name"])}</b>${esc(clean(r.Sector))}${clean(r.Headquarters)?" · "+esc(pc(r.Headquarters)):""}</span>`).join("");tp.innerHTML=h+h;$("#ulTape").hidden=false}
+ if(tp&&rows.length){const h=rows.slice(0,80).map(r=>`<span><b>${esc(r["Startup Name"])}</b>${esc(clean(r.Sector))}${clean(r.Headquarters)?" · "+esc(pc(r.Headquarters)):""}</span>`).join("");tp.innerHTML=h+h;$("#ulTape").hidden=false;
+  const speed=()=>{const w=tp.scrollWidth/2;if(w)tp.style.animationDuration=Math.max(w/38,24)+"s"};speed();
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(speed)}
  const f=rows.filter(r=>clean(r.Featured).toLowerCase()==="yes").slice(0,3);
  if(f.length){$("#ulFeat").hidden=false;$("#ulFeatGrid").innerHTML=f.map(r=>`<a class="ul-card rv" href="ledger.html"><span class="ul-meta">${esc(clean(r.Sector))} · ${esc(clean(r.Headquarters))}</span><h3>${esc(r["Startup Name"])}</h3><p>${esc(r["Tagline / Description"])}</p><span class="ul-more">${esc(clean(r["Funding Amount"])||"Undisclosed")} · ${esc(clean(r["Funding Stage"]))}</span></a>`).join("")}
  try{if(typeof SUPABASE_URL!=="undefined"){const a=await fetch(`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,summary&order=published_at.desc&limit=3`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}}).then(r=>r.json());
