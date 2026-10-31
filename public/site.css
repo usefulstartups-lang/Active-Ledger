@@ -107,3 +107,40 @@ a.ul-card:hover,.ul-card.tilt:hover{transform:translateY(-4px);border-color:var(
 .rv{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease}
 .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
+/* ===== v2 redesign layer ===== */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.24s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+.ul-nav{view-transition-name:ulnav;transition:background-color .25s,border-color .25s}
+::view-transition-group(ulnav){animation:none}
+.ul-nav.scrolled{background:rgba(11,18,32,.95);border-bottom-color:rgba(217,164,65,.3)}
+.ul-eyebrow{text-transform:none;letter-spacing:.02em;font-size:13px}
+.ul-btn{transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .18s,border-color .18s,color .18s}
+.ul-btn:active{transform:scale(.97)}
+.ul-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s}
+.ul-card:active{transform:scale(.985)}
+/* hero: one orchestrated entrance — the headline rises word by word, then the ledger tape runs */
+.ul-hero{padding:128px 0 0}
+.ul-hero h1{font-size:clamp(46px,8.6vw,118px);line-height:.98;letter-spacing:-.028em;max-width:11.5em;margin-bottom:26px}
+.ul-hero .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.08em}
+.ul-hero .w>span{display:inline-block;transform:translateY(108%);animation:ul-rise .85s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i)*70ms + 120ms)}
+.ul-hero .ul-lead,.ul-hero .ul-cta{opacity:0;animation:ul-fade .7s ease-out forwards;animation-delay:.85s}
+.ul-hero .ul-cta{animation-delay:1s;margin-bottom:64px}
+.ul-aurora::before{content:"";position:absolute;width:70vmax;height:70vmax;left:48%;top:-38vmax;background:radial-gradient(circle,rgba(217,164,65,.2),transparent 62%);animation:ul-drift 22s ease-in-out infinite alternate;will-change:transform}
+.ul-aurora::after{z-index:0}
+.ul-tape{margin-top:0;border-top:1px solid var(--rule);overflow:hidden;white-space:nowrap;padding:16px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);position:relative;z-index:2}
+.ul-tape-in{display:inline-block;animation:ul-tape 70s linear infinite}
+.ul-tape:hover .ul-tape-in{animation-play-state:paused}
+.ul-tape span{display:inline-block;margin-right:44px;font:13px var(--mono);color:var(--dim)}
+.ul-tape b{color:var(--paper);font:500 15px var(--serif);margin-right:8px}
+.ul-stat b{font-weight:400}
+.rv{transform:translateY(12px);transition:opacity .5s ease-out,transform .5s cubic-bezier(.2,.8,.2,1)}
+.ul-grid .rv:nth-child(2){transition-delay:.06s}.ul-grid .rv:nth-child(3){transition-delay:.12s}.ul-grid .rv:nth-child(4){transition-delay:.18s}
+.ul-doc section.rv{transform:none}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+@keyframes ul-rise{to{transform:none}}
+@keyframes ul-fade{to{opacity:1}}
+@keyframes ul-drift{to{transform:translate(-12vmax,8vmax) scale(1.15)}}
+@keyframes ul-tape{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ul-hero .w>span{transform:none;animation:none}.ul-hero .ul-lead,.ul-hero .ul-cta{opacity:1;animation:none}.ul-aurora::before,.ul-tape-in{animation:none}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
+.ul-mark:has(img){border:0;border-radius:7px}

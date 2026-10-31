@@ -1,0 +1,15 @@
+/* News page redesign: dark, to match the rest of the site — loaded automatically by site.js */
+:root{--ink:#F2EFE9;--paper:#0B1220;--paper-raised:#121B2E;--rule:rgba(242,239,233,.14);--amber:#D9A441;--amber-fill:#D9A441;--green:#6fbf73;--text-muted:#C9C4B8;--serif:'Fraunces','Lora',Georgia,serif;--sans:'Space Grotesk','Inter',system-ui,sans-serif}
+body{background:var(--paper);color:var(--ink)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(800px 480px at 90% -10%,rgba(217,164,65,.10),transparent 62%)}
+.masthead{background:transparent;color:var(--ink);border-bottom:1px solid var(--rule);padding-top:3.5rem}
+.wordmark{font-weight:500;font-size:clamp(2.4rem,7vw,4rem);letter-spacing:-.02em}
+.tagline{color:var(--text-muted)}
+.news-tab{border-radius:999px;transition:transform .15s,background-color .15s,color .15s,border-color .15s}
+.news-tab:active{transform:scale(.97)}
+.news-tab.active{background:var(--amber);color:#0B1220;border-color:var(--amber)}
+.story{transition:background-color .2s}
+.story-media{border-radius:10px}
+.story-title a{color:var(--ink)}
+.story-title a:hover{color:var(--amber)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}

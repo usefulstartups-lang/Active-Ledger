@@ -1,0 +1,28 @@
+/* Ledger page redesign — loaded automatically by site.js */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(900px 520px at 88% -8%,rgba(217,164,65,.10),transparent 62%),radial-gradient(800px 600px at -8% 42%,rgba(58,143,138,.10),transparent 62%)}
+header{padding-top:72px}
+header h1{font-size:clamp(42px,7.4vw,84px);line-height:.98;letter-spacing:-.025em}
+.sub{font-size:17px;max-width:600px}
+.stat b{font-weight:400;font-size:30px}
+.controls{top:var(--ul-nav-h,0px);background:rgba(11,18,32,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+input[type="text"],select{border-radius:8px;transition:border-color .2s,box-shadow .2s}
+input[type="text"]:focus,select:focus{box-shadow:0 0 0 3px rgba(217,164,65,.16)}
+.grid{background:none;border:0;gap:16px}
+.card{border:1px solid var(--rule);border-radius:16px;padding:22px;background:linear-gradient(180deg,rgba(242,239,233,.045),rgba(242,239,233,.012)),var(--ink-2);transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s}
+.card:hover{background:radial-gradient(280px circle at var(--mx,50%) var(--my,0),rgba(217,164,65,.11),transparent 70%),linear-gradient(180deg,rgba(242,239,233,.05),rgba(242,239,233,.015)),var(--ink-2);transform:translateY(-3px);border-color:rgba(217,164,65,.45);box-shadow:0 22px 44px -26px rgba(0,0,0,.9)}
+.card:active{transform:scale(.99)}
+.card-name{font-size:20px}
+.logo,.logo-fallback{border-radius:10px}
+.card-edge{border-radius:0 8px 8px 0}
+.compare-btn,.visit-btn,.suggest-btn,.form-submit-btn{border-radius:8px;transition:transform .15s,background-color .15s,color .15s}
+.compare-btn:active,.visit-btn:active,.suggest-btn:active,.form-submit-btn:active{transform:scale(.97)}
+.sector-tag,.investor-pill,.tech-pill,.founder-pill{border-radius:999px}
+.ul-enter .card{animation:ul-in .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*32ms)}
+@keyframes ul-in{from{opacity:0;transform:translateY(14px)}}
+.overlay{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.modal{border-radius:18px;background:linear-gradient(180deg,rgba(242,239,233,.05),rgba(242,239,233,.015)),var(--ink-2)}
+.overlay.open .modal{animation:ul-pop .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes ul-pop{from{opacity:0;transform:scale(.96) translateY(8px)}}
+.feat-card{border-radius:12px}
+.compare-tray{border-radius:12px;backdrop-filter:blur(10px)}
+@media(prefers-reduced-motion:reduce){.ul-enter .card,.overlay.open .modal{animation:none}.card{transition:none}}

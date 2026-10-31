@@ -103,6 +103,20 @@ const css=`
 .hm-tip b{color:var(--gold);font-family:'Fraunces',serif;font-weight:500;font-size:15px;display:block}
 .hm-tip small{color:var(--paper-dim);display:block}
 @media(max-width:800px){.hm-body{grid-template-columns:1fr}}
+.us-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 16px;padding-right:28px}
+.us-bar.in-modal{margin:0 0 22px;padding:0}
+.us-chip{font:600 11px 'IBM Plex Mono',monospace;border-radius:999px;padding:6px 12px;cursor:pointer;transition:transform .15s,background-color .15s,color .15s}
+.us-chip:active{transform:scale(.97)}
+.us-chip.avail{background:rgba(217,164,65,.16);color:var(--gold);border:1px solid var(--gold)}
+.us-chip.avail::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#6fbf73;margin-right:8px;box-shadow:0 0 0 3px rgba(111,191,115,.2)}
+.us-chip.avail:hover{background:var(--gold);color:var(--ink)}
+.us-chip.req{background:transparent;color:var(--paper-dim);border:1px dashed var(--paper-dim)}
+.us-chip.req:hover{color:var(--paper);border-color:var(--paper)}
+.us-sub{font:11px 'IBM Plex Mono',monospace;color:var(--paper-dim)}
+.us-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.us-alt{font:12px 'IBM Plex Mono',monospace;color:var(--paper);border:1px solid var(--rule);padding:11px 14px;border-radius:3px;text-decoration:none}
+.us-alt:hover{border-color:var(--gold);color:var(--gold)}
+.us-note{font-size:12px;line-height:1.55;color:var(--paper-dim);margin:22px 0 0}
 .ledger-news{margin:26px 0 24px;border-top:1px dashed var(--rule);padding-top:20px}
 .ledger-news a.ln-item{display:block;padding:11px 0;border-bottom:1px solid var(--rule);color:var(--paper);text-decoration:none;font-size:14px;line-height:1.4}
 .ledger-news a.ln-item:hover{color:var(--gold)}
@@ -242,12 +256,15 @@ if(typeof baseOpen==="function"&&hasDb){
     box.innerHTML=`<div class="pill-group-label">Recent news</div><div class="ln-empty">Loading…</div>`;
     const visit=modal.querySelector(".visit-btn");
     visit?modal.insertBefore(box,visit):modal.appendChild(box);
-    const q=`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,published_at&startup_name=eq.${encodeURIComponent('"'+name.replace(/"/g,'\\"')+'"')}&order=published_at.desc&limit=3`;
-    fetch(q,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}})
-      .then(r=>r.json()).then(items=>{
+    const hdr={apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY};
+    const get=f=>fetch(`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,published_at&startup_name=${f}&order=published_at.desc&limit=3`,{headers:hdr}).then(r=>r.json());
+    get("eq."+encodeURIComponent(name))
+      .then(items=>Array.isArray(items)&&!items.length?get("ilike."+encodeURIComponent(name.replace(/[%_*]/g,""))):items)
+      .then(items=>{
         if(!box.isConnected)return;
         const d=box.querySelector(".ln-empty");
-        if(!Array.isArray(items)||!items.length){d.textContent="No recent news yet — we check for new stories every hour.";return}
+        if(!Array.isArray(items)){console.error("Ledger news query failed:",items);d.textContent="News is unavailable right now.";return}
+        if(!items.length){d.textContent="No recent news yet — we check for new stories every hour.";return}
         box.innerHTML=`<div class="pill-group-label">Recent news</div>`+items.map(a=>{
           const dt=new Date(a.published_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
           const ok=/^https?:\/\//.test(a.link)?a.link:"#";
@@ -255,4 +272,98 @@ if(typeof baseOpen==="function"&&hasDb){
       }).catch(()=>{const d=box.querySelector(".ln-empty");if(d)d.textContent="News is unavailable right now."});
   };
 }
+
+/* ---------- 3. PROPER-CASE NAMES (founders, headquarters) — whatever is typed in the sheet ---------- */
+const KEEPU=new Set(["NCR","UK","USA","UAE","IIT","IIM"]);
+function pc(s){return String(s==null?"":s).trim().toLowerCase().replace(/(^|[\s\-'’.(\/])([a-z\u00c0-\u024f])/g,(m,a,b)=>a+b.toUpperCase()).replace(/[A-Za-z]+/g,w=>KEEPU.has(w.toUpperCase())?w.toUpperCase():w)}
+const pcList=s=>String(s||"").split(",").map(pc).filter(Boolean).join(", ");
+function fixNames(){if(typeof ALL==="undefined"||!ALL)return;ALL.forEach(r=>{if(r["Founders"])r["Founders"]=pcList(r["Founders"]);if(r["Headquarters"])r["Headquarters"]=pc(r["Headquarters"])})}
+const baseParse=window.parseCsvText;
+if(typeof baseParse==="function")window.parseCsvText=function(t){baseParse(t);fixNames();if(typeof applyFilters==="function")applyFilters()};
+const baseFounder=window.openFounderPopup;
+if(typeof baseFounder==="function")window.openFounderPopup=function(n){baseFounder(n);const h=document.querySelector("#listModalContent h2");if(h)h.textContent=pc(h.textContent)};
+fixNames();
+
+/* ---------- 4. UNLISTED SHARES (Oak Sprouts) ----------
+   Paste the published-CSV link of your "Unlisted Shares" sheet below. Its first column (or a column named
+   "Startup Name") holds the company names you can supply. Optional columns: Also Known As, Indicative Price,
+   Min Investment, Visible. */
+const UNLISTED_CSV_URL="";
+const OAK={name:"Oak Sprouts",email:"team.oaksprouts@gmail.com",phone:"+91 77889 90390",whatsapp:"917788990390",website:""};
+const nk=s=>String(s||"").toLowerCase().replace(/\b(pvt|private|ltd|limited|llp|inc)\b/g," ").replace(/[^a-z0-9]/g,"");
+let UNL=null;
+const unlName=r=>cl(r["Startup Name"])||cl(r["Company Name"])||cl(r["Name"])||cl(Object.values(r)[0]);
+function loadUnl(){
+  if(!UNLISTED_CSV_URL||typeof Papa==="undefined")return;
+  fetch(UNLISTED_CSV_URL,{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+    const m=new Map();
+    Papa.parse(t,{header:true,skipEmptyLines:true}).data.forEach(r=>{
+      if(/^(no|false|0|hide|hidden)$/i.test(cl(r["Visible"])))return;
+      [unlName(r)].concat(cl(r["Also Known As"]).split(",")).forEach(n=>{if(n&&n.trim())m.set(nk(n),r)});
+    });
+    UNL=m;if(typeof applyFilters==="function")applyFilters();
+  }).catch(()=>{UNL=null});
+}
+const ustatus=row=>UNL?(UNL.has(nk(row["Startup Name"]))?"avail":"request"):null;
+const wa=msg=>`https://wa.me/${OAK.whatsapp}?text=${encodeURIComponent(msg)}`;
+function bar(row,s){
+  const b=document.createElement("div");b.className="us-bar";
+  b.innerHTML=s==="avail"?`<button type="button" class="us-chip avail">Unlisted shares available</button><span class="us-sub">via ${esc(OAK.name)}</span>`
+    :`<button type="button" class="us-chip req">Not listed yet · we can find it</button>`;
+  b.querySelector("button").addEventListener("click",e=>{e.stopPropagation();openUnl(row,s)});
+  return b;
+}
+const DISC="Unlisted shares are not traded on a stock exchange. They carry higher risk, can be hard to sell and are priced by negotiation. This is information, not investment advice.";
+function openUnl(row,s){
+  const name=esc(cl(row["Startup Name"])),raw=cl(row["Startup Name"]);
+  let ov=document.getElementById("unlOverlay");
+  if(!ov){ov=document.createElement("div");ov.className="overlay";ov.id="unlOverlay";ov.style.zIndex=175;ov.innerHTML='<div class="modal" id="unlModal"></div>';document.body.appendChild(ov);
+    ov.addEventListener("click",e=>{if(e.target===ov)ov.classList.remove("open")})}
+  const m=document.getElementById("unlModal");
+  const links=(msg)=>`<a class="visit-btn" href="${wa(msg)}" target="_blank" rel="noopener">Chat on WhatsApp</a>
+    <a class="us-alt" href="tel:${esc(OAK.phone.replace(/\s/g,""))}">Call ${esc(OAK.phone)}</a>
+    <a class="us-alt" href="mailto:${esc(OAK.email)}?subject=${encodeURIComponent("Unlisted shares: "+raw)}&body=${encodeURIComponent(msg)}">Email us</a>
+    ${OAK.website?`<a class="us-alt" href="${esc(OAK.website)}" target="_blank" rel="noopener">Visit ${esc(OAK.name)} website</a>`:""}`;
+  if(s==="avail"){
+    const u=UNL.get(nk(raw))||{},price=cl(u["Indicative Price"]),min=cl(u["Min Investment"]);
+    m.innerHTML=`<button class="modal-close" id="unlX">&times;</button><h2>${name}: unlisted shares</h2>
+      <p class="modal-tagline">${esc(OAK.name)} deals in unlisted shares and currently has <b>${name}</b> available. Contact us for the latest availability and price.</p>
+      ${price||min?`<div class="field-grid">${price?`<div class="field"><label>Indicative price</label><div>${esc(price)}</div></div>`:""}${min?`<div class="field"><label>Minimum investment</label><div>${esc(min)}</div></div>`:""}</div>`:""}
+      <div class="us-actions">${links(`Hi ${OAK.name}, I'm interested in unlisted shares of ${raw}. Please share availability and price.`)}</div>
+      <p class="us-note">${DISC}</p>`;
+  }else{
+    m.innerHTML=`<button class="modal-close" id="unlX">&times;</button><h2>Want ${name} unlisted shares?</h2>
+      <p class="modal-tagline">We don't have ${name} listed right now, but ${esc(OAK.name)} can try to source it. Tell us a little and we'll check availability and get back to you.</p>
+      <form id="unlForm"><div class="form-field"><label>Your name</label><input type="text" name="n" required></div>
+      <div class="form-field"><label>Phone or email</label><input type="text" name="c" required></div>
+      <div class="form-field"><label>Roughly how much do you want to invest? (optional)</label><input type="text" name="a" placeholder="e.g. ₹5 lakh"></div>
+      <button class="form-submit-btn" type="submit">Request via WhatsApp</button></form>
+      <div class="us-actions" style="margin-top:14px"><a class="us-alt" href="tel:${esc(OAK.phone.replace(/\s/g,""))}">Call ${esc(OAK.phone)}</a><a class="us-alt" href="mailto:${esc(OAK.email)}?subject=${encodeURIComponent("Unlisted share request: "+raw)}">Email us</a></div>
+      <p class="us-note">${DISC}</p>`;
+    m.querySelector("#unlForm").onsubmit=e=>{e.preventDefault();const f=e.target;
+      window.open(wa(`Hi ${OAK.name}, I'd like to buy unlisted shares of ${raw}. Please check if you can source them.\nName: ${f.n.value.trim()}\nContact: ${f.c.value.trim()}${f.a.value.trim()?"\nBudget: "+f.a.value.trim():""}`),"_blank","noopener")};
+  }
+  m.querySelector("#unlX").onclick=()=>ov.classList.remove("open");
+  ov.classList.add("open");
+}
+function decorate(list){
+  const grid=document.getElementById("grid");if(!grid)return;
+  [...grid.children].forEach((card,i)=>{
+    const row=list[i];if(!row||!card.classList.contains("card"))return;
+    card.style.setProperty("--i",Math.min(i,14));
+    card.querySelectorAll(".us-bar").forEach(x=>x.remove());
+    const s=ustatus(row);if(s)card.insertBefore(bar(row,s),card.firstChild);
+  });
+  if(!decorate.done&&list.length){decorate.done=1;grid.classList.add("ul-enter");setTimeout(()=>grid.classList.remove("ul-enter"),1100)}
+}
+const baseRender=window.render;
+if(typeof baseRender==="function")window.render=function(l){baseRender(l);decorate(l)};
+// inside each startup's popup too
+const prevOpen=window.openModal;
+if(typeof prevOpen==="function")window.openModal=function(row){prevOpen(row);
+  const s=ustatus(row),t=document.querySelector("#modalContent .modal-tagline");
+  if(s&&t){const b=bar(row,s);b.classList.add("in-modal");t.after(b)}};
+document.addEventListener("mousemove",e=>{const c=e.target.closest&&e.target.closest(".card");if(c){const r=c.getBoundingClientRect();c.style.setProperty("--mx",(e.clientX-r.left)+"px");c.style.setProperty("--my",(e.clientY-r.top)+"px")}},{passive:true});
+loadUnl();
+if(typeof applyFilters==="function")applyFilters();
 })();

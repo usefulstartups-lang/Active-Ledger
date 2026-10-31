@@ -39,6 +39,7 @@ const $=(s,r)=>(r||document).querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const url=u=>/^\s*(javascript|data|vbscript):/i.test(u)?"#":u;
 const clean=v=>{v=(v||"").trim();return v==="-"?"":v};
+const pc=v=>String(v==null?"":v).trim().toLowerCase().replace(/(^|[\s\-'’.(\/])([a-z\u00c0-\u024f])/g,(m,a,b)=>a+b.toUpperCase());
 const vis=r=>!/^(no|false|0|hide)$/i.test((r.Visible||"").trim());
 const by=(a,b)=>(parseFloat(a.Order)||99)-(parseFloat(b.Order)||99);
 const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,(m,t,u)=>`<a href="${url(u)}">${t}</a>`);
@@ -68,7 +69,6 @@ function head(){
  const add=(tag,attrs)=>{const e=document.createElement(tag);Object.assign(e,attrs);document.head.appendChild(e)};
  add("link",{rel:"stylesheet",href:"site.css"});
  add("link",{rel:"icon",type:"image/svg+xml",href:"favicon.svg"});  
-      add("link",{rel:"apple-touch-icon",href:"apple-touch-icon.png"});
  add("link",{rel:"stylesheet",href:"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"});
 }
 function shell(S,nav){
@@ -82,6 +82,7 @@ function shell(S,nav){
  const nv=document.createElement("div");nv.className="ul-nav";
  nv.innerHTML=`<div class="ul-nav-in">${brand}<nav class="ul-links" id="ulLinks">${items.filter(r=>loc(r,"header")).map(link).join("")}</nav><button class="ul-burger" aria-label="Menu" id="ulBurger">☰</button></div>`;
  document.body.insertBefore(nv,document.body.firstChild);
+ addEventListener("scroll",()=>nv.classList.toggle("scrolled",scrollY>8),{passive:true});
  $("#ulBurger").onclick=()=>$("#ulLinks").classList.toggle("open");
  const sv=(p,f)=>`<svg viewBox="0 0 24 24" ${f?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'}>${p}</svg>`;
  const WA=sv('<path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.81L2 22l5.41-1.35a9.86 9.86 0 0 0 4.63 1.15h.01c5.46 0 9.9-4.45 9.9-9.9C21.96 6.45 17.51 2 12.04 2zm5.8 14.18c-.24.68-1.4 1.3-1.93 1.37-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.79-4.17-4.93-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.19 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.82 2 .89 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.14.14-.29.29-.13.58.17.29.75 1.24 1.62 2.01 1.12.99 2.06 1.3 2.35 1.44.29.14.46.12.63-.07.17-.19.72-.84.92-1.13.19-.29.39-.24.65-.14.27.1 1.68.79 1.97.94.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/>',1);
@@ -119,7 +120,7 @@ function textPage(k,S,P){
 function teamPage(S,T){
  const m=T.filter(vis).sort(by);
  return pageHead(S,"team")+`<div class="ul-wrap ul-team" style="padding-bottom:90px"><div class="ul-grid">${m.map(r=>{const ph=drive(r.Photo||r["Photo URL"]);
-  return `<div class="ul-card tilt rv"><div class="ul-photo">${ph?`<img src="${esc(ph)}" alt="${esc(r.Name)}" onerror="this.remove()">`:esc(initials(r.Name))}</div><div class="ul-body"><h3>${esc(r.Name)}</h3><div class="ul-role">${esc(r.Role)}</div><p>${inline(r.Bio)}</p>${clean(r.LinkedIn)?`<a class="ul-more" href="${esc(url(r.LinkedIn))}" target="_blank" rel="noopener">LinkedIn →</a>`:""}</div></div>`}).join("")}</div></div>`;
+  return `<div class="ul-card tilt rv"><div class="ul-photo">${ph?`<img src="${esc(ph)}" alt="${esc(pc(r.Name))}" onerror="this.remove()">`:esc(initials(pc(r.Name)))}</div><div class="ul-body"><h3>${esc(pc(r.Name))}</h3><div class="ul-role">${esc(r.Role)}</div><p>${inline(r.Bio)}</p>${clean(r.LinkedIn)?`<a class="ul-more" href="${esc(url(r.LinkedIn))}" target="_blank" rel="noopener">LinkedIn →</a>`:""}</div></div>`}).join("")}</div></div>`;
 }
 function contactPage(S){
  const row=(l,v)=>v?`<div><label>${l}</label>${v}</div>`:"";
@@ -140,12 +141,13 @@ function wireForm(S){
   else location.href="mailto:"+S.contact_email+"?subject="+encodeURIComponent("Message from "+d.name)+"&body="+encodeURIComponent(d.message+"\n\n"+d.email);};
 }
 
+const words=(t,n)=>String(t).split(/\s+/).filter(Boolean).map((w,i)=>`<span class="w"><span style="--i:${n+i}">${esc(w)}</span></span>`).join(" ");
 async function homePage(S,P,H){
  const cards=sections(P,"home");
  const stats=H.filter(vis).sort(by);
  const out=`<section class="ul-hero"><div class="ul-aurora"></div><div class="ul-wrap"><div class="ul-eyebrow">${esc(S.hero_eyebrow)}</div>
- <h1>${esc(S.hero_title)} <em>${esc(S.hero_accent)}</em></h1><p class="ul-lead">${esc(S.hero_subtext)}</p>
- <div class="ul-cta"><a class="ul-btn" href="${esc(url(S.cta1_url))}">${esc(S.cta1_label)}</a>${S.cta2_label?`<a class="ul-btn ghost" href="${esc(url(S.cta2_url))}">${esc(S.cta2_label)}</a>`:""}</div></div></section>
+ <h1>${words(S.hero_title,0)} <em>${words(S.hero_accent,S.hero_title.split(/\s+/).length)}</em></h1><p class="ul-lead">${esc(S.hero_subtext)}</p>
+ <div class="ul-cta"><a class="ul-btn" href="${esc(url(S.cta1_url))}">${esc(S.cta1_label)}</a>${S.cta2_label?`<a class="ul-btn ghost" href="${esc(url(S.cta2_url))}">${esc(S.cta2_label)}</a>`:""}</div><div class="ul-tape" id="ulTape" hidden><div class="ul-tape-in" id="ulTapeIn"></div></div></div></section>
  <div class="ul-wrap" style="padding-top:60px"><div class="ul-stats rv" id="ulStats">${stats.map(r=>`<div class="ul-stat"><b data-v="${esc(r.Value)}">${/^auto:/.test(r.Value)?"…":esc(r.Value)}</b><span>${esc(r.Label)}</span></div>`).join("")}</div></div>
  <section class="ul-sec"><div class="ul-wrap"><div class="ul-eyebrow">Explore</div><h2>Everything in one place</h2><div class="ul-grid">${cards.map(r=>`<a class="ul-card rv" href="${esc(url(clean(r.Link)||"#"))}"><h3>${esc(r.Heading)}</h3><p>${inline(r.Body)}</p><span class="ul-more">Open →</span></a>`).join("")}</div></div></section>
  <section class="ul-sec" id="ulFeat" hidden><div class="ul-wrap"><div class="ul-head"><div><div class="ul-eyebrow">Featured</div><h2>From the Ledger</h2></div><a class="ul-link" href="ledger.html">View all →</a></div><div class="ul-grid" id="ulFeatGrid"></div></div></section>
@@ -158,6 +160,8 @@ async function homeData(){
   const t=await fetch(`${SHEET}?gid=${GIDS.ledger}&single=true&output=csv`,{cache:"no-store"}).then(r=>r.text());
   rows=Papa.parse(t,{header:true,skipEmptyLines:true}).data.filter(r=>clean(r["Startup Name"])&&vis(r))}catch(e){}
  document.querySelectorAll("#ulStats b[data-v='auto:startups']").forEach(b=>{b.dataset.v=rows.length?String(rows.length):"—"; b.textContent=b.dataset.v});
+ const tp=$("#ulTapeIn");
+ if(tp&&rows.length){const h=rows.slice(0,40).map(r=>`<span><b>${esc(r["Startup Name"])}</b>${esc(clean(r.Sector))}${clean(r.Headquarters)?" · "+esc(pc(r.Headquarters)):""}</span>`).join("");tp.innerHTML=h+h;$("#ulTape").hidden=false}
  const f=rows.filter(r=>clean(r.Featured).toLowerCase()==="yes").slice(0,3);
  if(f.length){$("#ulFeat").hidden=false;$("#ulFeatGrid").innerHTML=f.map(r=>`<a class="ul-card rv" href="ledger.html"><span class="ul-meta">${esc(clean(r.Sector))} · ${esc(clean(r.Headquarters))}</span><h3>${esc(r["Startup Name"])}</h3><p>${esc(r["Tagline / Description"])}</p><span class="ul-more">${esc(clean(r["Funding Amount"])||"Undisclosed")} · ${esc(clean(r["Funding Stage"]))}</span></a>`).join("")}
  try{if(typeof SUPABASE_URL!=="undefined"){const a=await fetch(`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,summary&order=published_at.desc&limit=3`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}}).then(r=>r.json());
@@ -173,8 +177,13 @@ function count(el){const v=el.dataset.v||"";const m=v.match(/^(\D*)([\d.,]+)(.*)
  const n=parseFloat(m[2].replace(/,/g,""));let t0;const f=t=>{t0=t0||t;const p=Math.min((t-t0)/1200,1);el.textContent=m[1]+Math.round(n*(1-Math.pow(1-p,3))).toLocaleString("en-IN")+m[3];if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
 
 // ====== boot ======
+function themes(){
+ const add=h=>{const l=document.createElement("link");l.rel="stylesheet";l.href=h;document.head.appendChild(l)};
+ if(document.getElementById("countPill")&&document.getElementById("grid"))add("ledger-theme.css");
+ if(document.getElementById("feed")&&document.querySelector(".masthead"))add("news-theme.css");
+}
 async function boot(){
- head();
+ head();themes();
  const [S,nav,pages,team,hl]=await Promise.all([getSettings(),get("nav"),get("pages"),get("team"),get("highlights")]);
  const NAV=nav||DEF.nav,P=pages||DEF.pages;
  shell(S,NAV);
