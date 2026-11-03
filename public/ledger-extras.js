@@ -289,7 +289,7 @@ fixNames();
    "Startup Name") holds the company names you can supply. Optional columns: Also Known As, Indicative Price,
    Min Investment, Visible. */
 const UNLISTED_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3_m-l_xoMvD0gkiOofbQ2eq6L-o_vLxns26bq1qqQTP6m65ynI8owe8ZUOjos7j6cmK-4O_gEfIB8/pub?output=csv";
-const OAK={name:"Oak Sprouts",email:"team.oaksprouts@gmail.com",phone:"+91 77889 90390",whatsapp:"917788990390",website:"https://oaksprouts.com"};
+const OAK={name:"Oak Sprouts",email:"contactoaksprouts@gmail.com",phone:"+91 77 88 99 0390",whatsapp:"917788990390",website:"https://oaksprouts.com"};
 const nk=s=>String(s||"").toLowerCase().replace(/\b(pvt|private|ltd|limited|llp|inc)\b/g," ").replace(/[^a-z0-9]/g,"");
 let UNL=null;
 const unlName=r=>cl(r["Startup Name"])||cl(r["Company Name"])||cl(r["Name"])||cl(Object.values(r)[0]);
