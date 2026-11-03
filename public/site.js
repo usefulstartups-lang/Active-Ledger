@@ -17,7 +17,7 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  terms_title:"Terms of Use",terms_intro:"The rules for using this website.",
  privacy_title:"Privacy Policy",privacy_intro:"What we collect and why.",
  legal_updated:"",contact_email:"hello@example.com",contact_phone:"",address:"",
- linkedin:"",twitter:"",instagram:"",facebook:"",youtube:"",discord:"",blog:"",whatsapp:"",contact_form_url:"",logo_url:"",
+ linkedin:"",twitter:"",instagram:"",facebook:"",youtube:"",discord:"",blog:"",whatsapp:"",contact_form_url:"",logo_url:"logo-mark.png",
  oak_show:"yes",oak_name:"Oak Sprouts",oak_url:"https://oaksprouts.com",oak_logo:"oaksprouts-logo.png",oak_cta:"Visit oaksprouts.com",
  oak_text:"A startup of our co-founders that manages startup portfolios, with startup investing, seed funding, angel investing and unlisted opportunities.",
  oak_badge:"Useful Startups is part of the Oak Sprouts portfolio",
@@ -71,7 +71,11 @@ async function getSettings(){const d=await get("settings");const s=Object.assign
 function head(){
  const add=(tag,attrs)=>{const e=document.createElement(tag);Object.assign(e,attrs);document.head.appendChild(e)};
  add("link",{rel:"stylesheet",href:"site.css"});
- add("link",{rel:"icon",type:"image/svg+xml",href:"favicon.svg"});  
+ add("link",{rel:"icon",type:"image/png",sizes:"48x48",href:"favicon-48.png"});
+ add("link",{rel:"icon",type:"image/png",sizes:"32x32",href:"favicon-32.png"});
+ add("link",{rel:"apple-touch-icon",href:"apple-touch-icon.png"});
+ add("link",{rel:"manifest",href:"site.webmanifest"});
+ add("meta",{name:"theme-color",content:"#0B1220"});  
  add("link",{rel:"stylesheet",href:"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"});
 }
 function shell(S,nav){
@@ -189,6 +193,9 @@ function themes(){
  if(document.getElementById("feed")&&document.querySelector(".masthead"))add("news-theme.css");
 }
 async function boot(){
+ try{await boot0()}finally{document.dispatchEvent(new Event("ul:ready"))}
+}
+async function boot0(){
  head();themes();
  const [S,nav,pages,team,hl]=await Promise.all([getSettings(),get("nav"),get("pages"),get("team"),get("highlights")]);
  const NAV=nav||DEF.nav,P=pages||DEF.pages;
