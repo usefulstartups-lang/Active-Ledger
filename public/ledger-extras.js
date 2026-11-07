@@ -64,7 +64,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const cl=v=>{v=(v||"").trim();return v==="-"?"":v};
 
 const css=`
-.hm{max-width:1180px;margin:0 auto;padding:44px 24px 10px;border-bottom:1px solid var(--rule)}
+.hm{scroll-margin-top:110px;max-width:1180px;margin:0 auto;padding:44px 24px 10px;border-bottom:1px solid var(--rule)}
 .hm-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
 .hm-head h2{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(24px,3.4vw,34px);margin:0 0 6px}
 .hm-head p{margin:0;color:var(--paper-dim);font-size:14px;max-width:520px;line-height:1.55}
@@ -108,7 +108,11 @@ const css=`
 .us-chip{font:600 11px 'IBM Plex Mono',monospace;border-radius:999px;padding:6px 12px;cursor:pointer;transition:transform .15s,background-color .15s,color .15s}
 .us-chip:active{transform:scale(.97)}
 .us-chip.avail{background:rgba(217,164,65,.16);color:var(--gold);border:1px solid var(--gold)}
-.us-chip.avail::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#6fbf73;margin-right:8px;box-shadow:0 0 0 3px rgba(111,191,115,.2)}
+.us-chip.avail{animation:us-chip 2.4s ease-in-out infinite}
+.us-chip.avail::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-right:8px;vertical-align:1px;animation:us-dot 1.5s ease-in-out infinite}
+@keyframes us-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(74,222,128,.75),0 0 10px 2px rgba(74,222,128,.95)}55%{opacity:.3;box-shadow:0 0 0 9px rgba(74,222,128,0),0 0 2px 0 rgba(74,222,128,.2)}}
+@keyframes us-chip{50%{box-shadow:0 0 0 4px rgba(217,164,65,.16)}}
+@media(prefers-reduced-motion:reduce){.us-chip.avail,.us-chip.avail::before{animation:none}}
 .us-chip.avail:hover{background:var(--gold);color:var(--ink)}
 .us-chip.req{background:transparent;color:var(--paper-dim);border:1px dashed var(--paper-dim)}
 .us-chip.req:hover{color:var(--paper);border-color:var(--paper)}
@@ -279,7 +283,10 @@ function pc(s){return String(s==null?"":s).trim().toLowerCase().replace(/(^|[\s\
 const pcList=s=>String(s||"").split(",").map(pc).filter(Boolean).join(", ");
 function fixNames(){if(typeof ALL==="undefined"||!ALL)return;ALL.forEach(r=>{if(r["Founders"])r["Founders"]=pcList(r["Founders"]);if(r["Headquarters"])r["Headquarters"]=pc(r["Headquarters"])})}
 const baseParse=window.parseCsvText;
-if(typeof baseParse==="function")window.parseCsvText=function(t){baseParse(t);fixNames();if(typeof applyFilters==="function")applyFilters()};
+let hashDone=false;
+function openHash(){if(hashDone||typeof ALL==="undefined")return;const m=location.hash.match(/^#s=(.+)$/);if(!m)return;let n="";try{n=decodeURIComponent(m[1]).toLowerCase()}catch(x){return}
+  const row=ALL.find(r=>cl(r["Startup Name"]).toLowerCase()===n);if(row&&typeof window.openModal==="function"){hashDone=true;window.openModal(row)}}
+if(typeof baseParse==="function")window.parseCsvText=function(t){baseParse(t);fixNames();if(typeof applyFilters==="function")applyFilters();openHash()};
 const baseFounder=window.openFounderPopup;
 if(typeof baseFounder==="function")window.openFounderPopup=function(n){baseFounder(n);const h=document.querySelector("#listModalContent h2");if(h)h.textContent=pc(h.textContent)};
 fixNames();
@@ -288,8 +295,8 @@ fixNames();
    Paste the published-CSV link of your "Unlisted Shares" sheet below. Its first column (or a column named
    "Startup Name") holds the company names you can supply. Optional columns: Also Known As, Indicative Price,
    Min Investment, Visible. */
-const UNLISTED_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3_m-l_xoMvD0gkiOofbQ2eq6L-o_vLxns26bq1qqQTP6m65ynI8owe8ZUOjos7j6cmK-4O_gEfIB8/pub?output=csv";
-const OAK={name:"Oak Sprouts",email:"contactoaksprouts@gmail.com",phone:"+91 77 88 99 0390",whatsapp:"917788990390",website:"https://oaksprouts.com"};
+const UNLISTED_CSV_URL="";
+const OAK={name:"Oak Sprouts",email:"team.oaksprouts@gmail.com",phone:"+91 77889 90390",whatsapp:"917788990390",website:"https://oaksprouts.com"};
 const nk=s=>String(s||"").toLowerCase().replace(/\b(pvt|private|ltd|limited|llp|inc)\b/g," ").replace(/[^a-z0-9]/g,"");
 let UNL=null;
 const unlName=r=>cl(r["Startup Name"])||cl(r["Company Name"])||cl(r["Name"])||cl(Object.values(r)[0]);
@@ -366,4 +373,5 @@ if(typeof prevOpen==="function")window.openModal=function(row){prevOpen(row);
 document.addEventListener("mousemove",e=>{const c=e.target.closest&&e.target.closest(".card");if(c){const r=c.getBoundingClientRect();c.style.setProperty("--mx",(e.clientX-r.left)+"px");c.style.setProperty("--my",(e.clientY-r.top)+"px")}},{passive:true});
 loadUnl();
 if(typeof applyFilters==="function")applyFilters();
+openHash();
 })();

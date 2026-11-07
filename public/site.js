@@ -13,7 +13,7 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  cta1_label:"Explore the Ledger",cta1_url:"ledger.html",cta2_label:"Read the news",cta2_url:"news.html",
  about_title:"About us",about_intro:"Why this exists and what we believe.",
  team_title:"The team",team_intro:"The people behind the ledger.",
- contact_title:"Get in touch",contact_intro:"Questions, corrections or partnerships — we read everything.",
+ support_title:"Buy Me a Beer",beer_message:"Good things take support! Your contributions keep us motivated to keep this website running, growing and bringing you more valuable content. Every little contribution makes a difference. ❤️",contact_title:"Get in touch",contact_intro:"Questions, corrections or partnerships — we read everything.",
  terms_title:"Terms of Use",terms_intro:"The rules for using this website.",
  privacy_title:"Privacy Policy",privacy_intro:"What we collect and why.",
  legal_updated:"",contact_email:"hello@example.com",contact_phone:"",address:"",
@@ -24,7 +24,7 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  footer_blurb:"Tracking India's startups, one row at a time.",copyright:"© 2026 Useful Startups. All rights reserved."},
 nav:[{Label:"Home",URL:"index.html",Location:"header",Order:1},{Label:"Ledger",URL:"ledger.html",Location:"both",Group:"Directories",Order:2},
  {Label:"News",URL:"news.html",Location:"both",Group:"Resources",Order:3},{Label:"About",URL:"about.html",Location:"both",Group:"Company",Order:4},
- {Label:"Team",URL:"team.html",Location:"both",Group:"Company",Order:5},{Label:"Contact",URL:"contact.html",Location:"both",Group:"Company",Order:6},
+ {Label:"Team",URL:"team.html",Location:"both",Group:"Company",Order:5},{Label:"Contact",URL:"contact.html",Location:"both",Group:"Company",Order:6},{Label:"Buy Me a Beer",URL:"support.html",Location:"footer",Group:"Company",Order:7},
  {Label:"Terms",URL:"terms.html",Location:"footer",Group:"Resources",Order:7},{Label:"Privacy",URL:"privacy.html",Location:"footer",Group:"Resources",Order:8}],
 highlights:[{Value:"auto:startups",Label:"Startups tracked",Order:1},{Value:"Hourly",Label:"News refresh",Order:2},{Value:"100%",Label:"Free to browse",Order:3}],
 team:[{Name:"Founder Name",Role:"Founder",Bio:"Edit this in the Team tab of your Google Sheet.",Order:1}],
@@ -32,6 +32,9 @@ pages:[
  {Page:"home",Order:1,Heading:"The Active Ledger",Body:"Search, filter and compare startups by sector, tech and investors.",Link:"ledger.html"},
  {Page:"home",Order:2,Heading:"The Runway",Body:"Fresh startup and business news, refreshed every hour.",Link:"news.html"},
  {Page:"home",Order:3,Heading:"Suggest a startup",Body:"Know one that belongs here? Send it in for review.",Link:"ledger.html"},
+  {Page:"steps",Order:1,Heading:"Search",Body:"Find startups by name, sector, city, founder or investor."},
+ {Page:"steps",Order:2,Heading:"Compare",Body:"Put up to four startups side by side and see who backs them."},
+ {Page:"steps",Order:3,Heading:"Connect",Body:"Spot an unlisted opportunity? Oak Sprouts can help you get the shares."},
  {Page:"about",Order:1,Heading:"Our mission",Body:"Replace this text from the Pages tab of your Google Sheet.\n\nSeparate paragraphs with a blank line. Use **bold**, [links](https://example.com) and\n- bullet lists."},
  {Page:"terms",Order:1,Heading:"1. Acceptance",Body:"By using this website you agree to these terms. Replace this placeholder with your reviewed legal text."},
  {Page:"privacy",Order:1,Heading:"1. What we collect",Body:"Replace this placeholder with your reviewed privacy policy."}]
@@ -152,13 +155,18 @@ function wireForm(S){
 const words=(t,n)=>String(t).split(/\s+/).filter(Boolean).map((w,i)=>`<span class="w"><span style="--i:${n+i}">${esc(w)}</span></span>`).join(" ");
 async function homePage(S,P,H){
  const cards=sections(P,"home");
- const stats=H.filter(vis).sort(by);
+ const steps=sections(P,"steps");
  const out=`<section class="ul-hero"><div class="ul-aurora"></div><div class="ul-wrap"><div class="ul-eyebrow">${esc(S.hero_eyebrow)}</div>
  <h1>${words(S.hero_title,0)} <em>${words(S.hero_accent,S.hero_title.split(/\s+/).length)}</em></h1><p class="ul-lead">${esc(S.hero_subtext)}</p>
  <div class="ul-cta"><a class="ul-btn" href="${esc(url(S.cta1_url))}">${esc(S.cta1_label)}</a>${S.cta2_label?`<a class="ul-btn ghost" href="${esc(url(S.cta2_url))}">${esc(S.cta2_label)}</a>`:""}</div><div class="ul-tape" id="ulTape" hidden><div class="ul-tape-in" id="ulTapeIn"></div></div></div></section>
- <div class="ul-wrap" style="padding-top:60px"><div class="ul-stats rv" id="ulStats">${stats.map(r=>`<div class="ul-stat"><b data-v="${esc(r.Value)}">${/^auto:/.test(r.Value)?"…":esc(r.Value)}</b><span>${esc(r.Label)}</span></div>`).join("")}</div></div>
+ <section class="ul-sec ul-pulse" id="ulPulse" hidden><div class="ul-wrap"><div class="ul-head"><h2>What's new in the Ledger</h2><a class="ul-link" href="ledger.html">Open the Ledger →</a></div>
+ <div class="ul-pulse-grid"><a class="ul-week rv" id="ulWeek" href="ledger.html"></a>
+ <div class="ul-pulse-side"><div class="ul-box rv"><h3>Recently added</h3><div id="ulRecent"></div></div>
+ <div class="ul-box rv"><h3>Trending sectors</h3><div id="ulTrend"></div></div>
+ <a class="ul-box ul-mapcta rv" href="ledger.html#heatmap"><h3>Heat map</h3><p>See which states India's startups are based in →</p></a></div></div></div></section>
+ ${steps.length?`<section class="ul-sec"><div class="ul-wrap"><h2>How it works</h2><ol class="ul-steps">${steps.map((r,i)=>`<li class="rv"><span class="ul-num">${String(i+1).padStart(2,"0")}</span><h3>${esc(r.Heading)}</h3><p>${inline(r.Body)}</p></li>`).join("")}</ol></div></section>`:""}
  <section class="ul-sec"><div class="ul-wrap"><div class="ul-eyebrow">Explore</div><h2>Everything in one place</h2><div class="ul-grid">${cards.map(r=>`<a class="ul-card rv" href="${esc(url(clean(r.Link)||"#"))}"><h3>${esc(r.Heading)}</h3><p>${inline(r.Body)}</p><span class="ul-more">Open →</span></a>`).join("")}</div></div></section>
- <section class="ul-sec" id="ulFeat" hidden><div class="ul-wrap"><div class="ul-head"><div><div class="ul-eyebrow">Featured</div><h2>From the Ledger</h2></div><a class="ul-link" href="ledger.html">View all →</a></div><div class="ul-grid" id="ulFeatGrid"></div></div></section>
+ <section class="ul-sec ul-beer-band"><div class="ul-wrap"><a class="ul-beer-cta rv" href="support.html"><span class="e">🍺</span><div><h3>Enjoying Useful Startups?</h3><p>Buy us a beer and help keep it running.</p></div><span class="ul-more">Support us →</span></a></div></section>
  <section class="ul-sec" id="ulNews" hidden><div class="ul-wrap"><div class="ul-head"><div><div class="ul-eyebrow">Latest</div><h2>From The Runway</h2></div><a class="ul-link" href="news.html">All stories →</a></div><div class="ul-grid" id="ulNewsGrid"></div></div></section>`;
  return out;
 }
@@ -167,13 +175,21 @@ async function homeData(){
  try{await loadScript("https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js");
   const t=await fetch(`${SHEET}?gid=${GIDS.ledger}&single=true&output=csv`,{cache:"no-store"}).then(r=>r.text());
   rows=Papa.parse(t,{header:true,skipEmptyLines:true}).data.filter(r=>clean(r["Startup Name"])&&vis(r))}catch(e){}
- document.querySelectorAll("#ulStats b[data-v='auto:startups']").forEach(b=>{b.dataset.v=rows.length?String(rows.length):"—"; b.textContent=b.dataset.v});
  const tp=$("#ulTapeIn");
  if(tp&&rows.length){const h=rows.slice(0,80).map(r=>`<span><b>${esc(r["Startup Name"])}</b>${esc(clean(r.Sector))}${clean(r.Headquarters)?" · "+esc(pc(r.Headquarters)):""}</span>`).join("");tp.innerHTML=h+h;$("#ulTape").hidden=false;
   const speed=()=>{const w=tp.scrollWidth/2;if(w)tp.style.animationDuration=Math.max(w/38,24)+"s"};speed();
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(speed)}
- const f=rows.filter(r=>clean(r.Featured).toLowerCase()==="yes").slice(0,3);
- if(f.length){$("#ulFeat").hidden=false;$("#ulFeatGrid").innerHTML=f.map(r=>`<a class="ul-card rv" href="ledger.html"><span class="ul-meta">${esc(clean(r.Sector))} · ${esc(clean(r.Headquarters))}</span><h3>${esc(r["Startup Name"])}</h3><p>${esc(r["Tagline / Description"])}</p><span class="ul-more">${esc(clean(r["Funding Amount"])||"Undisclosed")} · ${esc(clean(r["Funding Stage"]))}</span></a>`).join("")}
+ if(rows.length){
+  const T=r=>encodeURIComponent(r["Startup Name"].trim()),lg=r=>{const l=clean(r["Logo URL"]);if(l)return drive(l);const w=clean(r["Website URL"]);try{return w?"https://www.google.com/s2/favicons?domain="+new URL(/^https?:/.test(w)?w:"https://"+w).hostname+"&sz=128":""}catch(e){return""}};
+  const feat=rows.filter(r=>clean(r.Featured).toLowerCase()==="yes"),pool=feat.length?feat:rows,w=pool[Math.floor(Date.now()/6048e5)%pool.length];
+  const wl=lg(w),wn=w["Startup Name"].trim(),edge=clean(w["Competitive Edge"]);
+  const wk=$("#ulWeek");wk.href="ledger.html#s="+T(w);wk.dataset.i=initials(wn);
+  wk.innerHTML=`<span class="ul-meta">Startup of the week</span><div class="ul-wk-top">${wl?`<img src="${esc(wl)}" alt="" onerror="this.remove()">`:`<div class="ul-wk-fb">${esc(initials(wn))}</div>`}<div><h3>${esc(wn)}</h3><div class="ul-wk-sub">${esc([clean(w.Sector),pc(clean(w.Headquarters)),clean(w["Founded In"])?"est. "+clean(w["Founded In"]):""].filter(Boolean).join(" · "))}</div></div></div><p>${esc(clean(w["Tagline / Description"]))}</p>${edge?`<blockquote>${esc(edge)}</blockquote>`:""}<div class="ul-wk-foot"><span>${esc(clean(w["Funding Amount"])||"Funding undisclosed")}${clean(w["Funding Stage"]||w["Funding stage"])?" · "+esc(clean(w["Funding Stage"]||w["Funding stage"])):""}</span><span class="ul-more">Open in the Ledger →</span></div>`;
+  const dated=rows.filter(r=>Date.parse(r["Added On"])),rec=(dated.length?dated.slice().sort((a,b)=>Date.parse(b["Added On"])-Date.parse(a["Added On"])):rows.slice().reverse()).slice(0,4);
+  $("#ulRecent").innerHTML=rec.map(r=>`<a class="ul-rec" href="ledger.html#s=${T(r)}"><b>${esc(r["Startup Name"])}</b><span>${esc([clean(r.Sector),pc(clean(r.Headquarters))].filter(Boolean).join(" · "))}</span></a>`).join("");
+  const c={};rows.forEach(r=>{const x=clean(r.Sector);if(x)c[x]=(c[x]||0)+1});const top=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,5),mx=top.length?top[0][1]:1;
+  $("#ulTrend").innerHTML=top.map(([n,k])=>`<div class="ul-bar"><span>${esc(n)}</span><em>${k}</em><i style="--w:${(k/mx*100).toFixed(0)}%"></i></div>`).join("");
+  $("#ulPulse").hidden=false}
  try{if(typeof SUPABASE_URL!=="undefined"){const a=await fetch(`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,summary&order=published_at.desc&limit=3`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}}).then(r=>r.json());
   if(Array.isArray(a)&&a.length){$("#ulNews").hidden=false;$("#ulNewsGrid").innerHTML=a.map(x=>`<a class="ul-card rv" href="${esc(url(x.link))}" target="_blank" rel="noopener"><span class="ul-meta">${esc(x.source)}</span><h3 style="font-size:18px">${esc(x.title)}</h3><p>${esc((x.summary||"").slice(0,120))}</p></a>`).join("")}}}catch(e){}
 }
@@ -185,6 +201,75 @@ function fx(){
 }
 function count(el){const v=el.dataset.v||"";const m=v.match(/^(\D*)([\d.,]+)(.*)$/);if(!m||/^auto:/.test(v)){el.textContent=v;return}
  const n=parseFloat(m[2].replace(/,/g,""));let t0;const f=t=>{t0=t0||t;const p=Math.min((t-t0)/1200,1);el.textContent=m[1]+Math.round(n*(1-Math.pow(1-p,3))).toLocaleString("en-IN")+m[3];if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
+
+
+// ====== Buy Me a Beer ======
+const TIERS=[{id:"beer",icon:"🍺",name:"Buy Me a Beer",amt:10},{id:"round",icon:"🍻",name:"Buy Me a Round",amt:50},{id:"cheers",icon:"🥂",name:"Keep the Cheers Coming",amt:100},{id:"party",icon:"🎉",name:"Party Sponsor",amt:500},{id:"bar",icon:"🏆",name:"Sponsor the Bar",amt:5000}];
+const FILL=[30,48,64,80,94],BADGES=[["🥇","Head Brewer","gold"],["🥈","Master Taster","silver"],["🥉","Chief Cheerer","bronze"],["🍺","Regular","reg"],["🍺","Regular","reg"]];
+const inr=n=>"₹"+Number(n).toLocaleString("en-IN");
+function supportPage(S){
+ const bubbles=[[38,0],[52,.9],[64,1.7],[46,2.4],[58,.4],[70,1.2]].map(([x,d],i)=>`<circle class="bb" cx="${x}" cy="125" r="${2.2+i%3}" style="animation-delay:${d}s"/>`).join("");
+ return `<section class="beer-hero"><div class="ul-aurora"></div><div class="ul-wrap"><div class="ul-eyebrow">Support us</div><h1>Buy Me a <em>Beer</em> <span class="e">🍺</span></h1><p class="ul-lead">${esc(S.beer_message)}</p></div></section>
+ <div class="ul-wrap"><div class="beer-grid"><div class="beer-card" id="beerCard">
+  <div class="beer-mugwrap"><svg class="beer-mug" id="beerMug" viewBox="0 0 126 146" aria-hidden="true"><defs><linearGradient id="bgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D27A"/><stop offset="1" stop-color="#C98A1B"/></linearGradient><clipPath id="glass"><path d="M22 30H86L80 126Q79 132 73 132H35Q29 132 28 126Z"/></clipPath></defs>
+   <path d="M86 46H100Q114 46 114 64V80Q114 98 100 98H82" fill="none" stroke="rgba(242,239,233,.5)" stroke-width="7" stroke-linecap="round"/>
+   <g clip-path="url(#glass)"><g class="fill" id="beerFill"><rect x="14" y="36" width="80" height="140" fill="url(#bgl)"/>${bubbles}</g></g>
+   <path d="M22 30H86L80 126Q79 132 73 132H35Q29 132 28 126Z" fill="rgba(242,239,233,.05)" stroke="rgba(242,239,233,.6)" stroke-width="3" stroke-linejoin="round"/>
+   <g class="foam" id="beerFoam" fill="#F2EFE9"><circle cx="30" cy="34" r="9"/><circle cx="44" cy="28" r="11"/><circle cx="60" cy="27" r="12"/><circle cx="76" cy="31" r="10"/><circle cx="84" cy="36" r="7"/></g></svg></div>
+  <h2 class="beer-h2">Pick your round</h2>
+  <div class="beer-tiers" role="radiogroup" aria-label="Donation amount">${TIERS.map((t,i)=>`<button type="button" class="beer-tier" role="radio" aria-checked="${i===0}" data-i="${i}"><span class="i">${t.icon}</span><b>${esc(t.name)}</b><span class="p">${inr(t.amt)}</span></button>`).join("")}</div>
+  <label class="beer-lbl" for="beerName">Your username <small>(shown on the leaderboard)</small></label>
+  <input id="beerName" class="beer-input" maxlength="24" autocomplete="nickname" placeholder="e.g. StartupSam">
+  <button type="button" class="beer-pay" id="beerPay"><span>Buy Me a Beer</span><b id="beerAmt">${inr(TIERS[0].amt)}</b></button>
+  <div class="beer-msg" id="beerMsg" role="status" aria-live="polite"></div></div>
+  <aside class="beer-board"><div class="beer-board-h"><h2>Top 5 Beer Supporters</h2><span class="live"><i></i>Live</span></div><ol id="beerBoard" class="beer-list"></ol><p class="beer-note">Rankings update automatically after every successful payment.</p></aside></div>
+  <p class="beer-fine">Contributions are voluntary and non-refundable gifts that help keep this website running. Payments are processed securely by Razorpay; we never see your card or UPI details. Usernames on the leaderboard are public.</p></div>`;
+}
+function loadExt(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`))return res();const x=document.createElement("script");x.src=src;x.onload=res;x.onerror=rej;document.head.appendChild(x)})}
+async function fetchBoard(){
+ if(typeof SUPABASE_URL==="undefined")return null;
+ try{const r=await fetch(`${SUPABASE_URL}/rest/v1/beer_leaderboard?select=username,total,contributions&order=total.desc,last_paid.asc&limit=5`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY},cache:"no-store"});
+  const d=await r.json();return Array.isArray(d)?d:null}catch(e){return null}
+}
+let boardSig="";
+function paintBoard(rows,force){
+ const ol=$("#beerBoard");if(!ol)return;
+ const sig=JSON.stringify(rows);if(!force&&sig===boardSig)return;boardSig=sig;
+ if(!rows||!rows.length){ol.innerHTML=`<li class="beer-empty">No supporters yet. Be the first to raise a glass! 🍻</li>`+[1,2,3,4].map(()=>`<li class="beer-row ghost"><span class="rk">·</span><span class="nm">—</span></li>`).join("");return}
+ const mx=Math.max(...rows.map(r=>+r.total))||1;
+ ol.innerHTML=rows.map((r,i)=>{const b=BADGES[i];return `<li class="beer-row r${i+1}" style="--d:${i*70}ms"><span class="rk" title="Rank ${i+1}">${b[0]}</span><div class="who"><b>${esc(r.username)}</b><span class="bd ${b[2]}">${b[1]}</span></div><div class="amt"><b data-n="${+r.total}">${inr(r.total)}</b><small>${r.contributions} cheer${+r.contributions===1?"":"s"}</small></div><i class="bar" style="--w:${Math.max(6,(+r.total/mx*100)).toFixed(0)}%"></i></li>`}).join("");
+}
+async function refreshBoard(force){const d=await fetchBoard();if(d)paintBoard(d,force);else if(!boardSig)paintBoard([],true)}
+function confetti(){const f=["🍺","🍻","✨","🥂","🎉"];for(let i=0;i<26;i++){const e=document.createElement("span");e.className="beer-conf";e.textContent=f[i%f.length];e.style.cssText=`left:${Math.random()*100}vw;animation-delay:${(Math.random()*.5).toFixed(2)}s;font-size:${16+Math.random()*16|0}px;--dx:${(Math.random()*120-60)|0}px`;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}}
+function wireSupport(S){
+ let sel=0;const tiers=[...document.querySelectorAll(".beer-tier")],pay=$("#beerPay"),name=$("#beerName"),msg=$("#beerMsg"),mug=$("#beerMug");
+ try{name.value=localStorage.getItem("beer_name")||""}catch(e){}
+ const level=i=>{const t=96-FILL[i];$("#beerFill").style.transform=`translateY(${t}px)`;$("#beerFoam").style.transform=`translateY(${t}px)`};
+ const pick=i=>{sel=i;tiers.forEach((b,k)=>b.setAttribute("aria-checked",k===i));$("#beerAmt").textContent=inr(TIERS[i].amt);level(i);mug.classList.remove("pop");void mug.getBoundingClientRect();mug.classList.add("pop")};
+ tiers.forEach((b,i)=>{b.onclick=()=>pick(i);b.onkeydown=e=>{if(e.key==="ArrowDown"||e.key==="ArrowRight"){e.preventDefault();const n=(i+1)%5;tiers[n].focus();pick(n)}if(e.key==="ArrowUp"||e.key==="ArrowLeft"){e.preventDefault();const n=(i+4)%5;tiers[n].focus();pick(n)}}});
+ pay.onmouseenter=()=>{mug.classList.remove("clink");void mug.getBoundingClientRect();mug.classList.add("clink")};
+ level(0);
+ const say=(t,c)=>{msg.textContent=t;msg.className="beer-msg "+(c||"")};
+ pay.onclick=async()=>{
+  const u=name.value.replace(/\s+/g," ").trim();
+  if(!/^[A-Za-z0-9][A-Za-z0-9 ._-]{1,23}$/.test(u)){say("Please enter a username: 2–24 letters or numbers (spaces . _ - allowed).","err");name.focus();return}
+  try{localStorage.setItem("beer_name",u)}catch(e){}
+  pay.disabled=true;pay.classList.add("busy");say("Opening secure checkout…");
+  try{
+   const r=await fetch("/api/beer/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tier:TIERS[sel].id,name:u})});
+   if(r.status===404||r.status===501){say("Payments aren't switched on yet. Please check back soon!","err");return}
+   const o=await r.json().catch(()=>({}));if(!r.ok||!o.order_id){say("We couldn't start the payment. Please try again in a moment.","err");return}
+   await loadExt("https://checkout.razorpay.com/v1/checkout.js");
+   const rz=new Razorpay({key:o.key_id,amount:o.amount,currency:"INR",order_id:o.order_id,name:S.site_name,description:TIERS[sel].name,notes:{username:u},theme:{color:"#D9A441"},
+    handler:()=>{say(`Cheers, ${u}! 🍻 Your ${inr(TIERS[sel].amt)} is being confirmed. The leaderboard updates in a moment.`,"ok");confetti();let n=0;const t=setInterval(()=>{refreshBoard();if(++n>=10)clearInterval(t)},3000);setTimeout(()=>refreshBoard(),1200)},
+    modal:{ondismiss:()=>{say("")}}});
+   rz.on&&rz.on("payment.failed",()=>say("The payment didn't go through. You haven't been charged. Please try again.","err"));
+   rz.open();
+  }catch(e){say("Something went wrong. Please try again.","err")}
+  finally{pay.disabled=false;pay.classList.remove("busy")}
+ };
+ refreshBoard(true);setInterval(()=>{if(!document.hidden)refreshBoard()},30000);
+}
 
 // ====== boot ======
 function themes(){
@@ -206,6 +291,7 @@ async function boot0(){
  const T=key==="home"?S.site_name:(S[key+"_title"]||key)+" — "+S.site_name;document.title=T;
  if(key==="home"){root.innerHTML=await homePage(S,P,hl||DEF.highlights);fx();homeData()}
  else if(key==="team"){root.innerHTML=teamPage(S,team||DEF.team);fx()}
+ else if(key==="support"){root.innerHTML=supportPage(S);wireSupport(S);fx()}
  else if(key==="contact"){root.innerHTML=contactPage(S);wireForm(S);fx()}
  else{root.innerHTML=textPage(key,S,P);fx()}
 }
