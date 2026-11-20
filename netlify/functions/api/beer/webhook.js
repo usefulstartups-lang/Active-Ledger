@@ -1,4 +1,4 @@
-// Cloudflare Pages Function: POST /api/beer/webhook
+// Cloudflare Pages Function: POST /api/coffee/webhook
 // Razorpay calls this after a payment. We check the signature, then mark the payment as paid.
 // The leaderboard reads the paid rows, so rankings update automatically.
 const enc = new TextEncoder();
@@ -35,15 +35,16 @@ export async function onRequestPost({ request, env }) {
     payment_id: p.id,
     username: (p.notes && p.notes.username) || 'Anonymous',
     tier: (p.notes && p.notes.tier) || null,
+    site: (p.notes && p.notes.site) || 'useful',
     amount: p.amount / 100,
     status: 'paid',
     paid_at: new Date((p.created_at || Date.now() / 1000) * 1000).toISOString(),
   };
-  const r = await fetch(env.SUPABASE_URL + '/rest/v1/beer_payments?on_conflict=order_id', {
+  const r = await fetch(env.SUPABASE_URL + '/rest/v1/coffee_payments?on_conflict=order_id', {
     method: 'POST',
     headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
     body: JSON.stringify(row),
   });
-  if (!r.ok) { console.error('beer webhook db error', r.status); return new Response('db error', { status: 500 }); } // Razorpay retries
+  if (!r.ok) { console.error('coffee webhook db error', r.status); return new Response('db error', { status: 500 }); } // Razorpay retries
   return new Response('ok', { status: 200 });
 }
