@@ -13,7 +13,7 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  cta1_label:"Explore the Ledger",cta1_url:"ledger.html",cta2_label:"Read the news",cta2_url:"news.html",
  about_title:"About us",about_intro:"Why this exists and what we believe.",
  team_title:"The team",team_intro:"The people behind the ledger.",
- support_title:"Buy Me a Beer",beer_message:"Good things take support! Your contributions keep us motivated to keep this website running, growing and bringing you more valuable content. Every little contribution makes a difference. ❤️",contact_title:"Get in touch",contact_intro:"Questions, corrections or partnerships — we read everything.",
+ failed_show:"yes",failed_url:"https://failedstartups.in/",failed_bar:"Curious about the ones that didn't make it?",failed_cta:"Explore failed startups",failed_card_title:"Learn from startups that failed",failed_card_text:"Every shutdown carries a lesson. Browse postmortems, failure reasons and patterns on Failed Startups.",support_title:"Buy Me a Coffee",coffee_message:"Good things take support! Your contributions keep us motivated to keep this website running, growing and bringing you more valuable content. Every little contribution makes a difference. ❤️",contact_title:"Get in touch",contact_intro:"Questions, corrections or partnerships — we read everything.",
  terms_title:"Terms of Use",terms_intro:"The rules for using this website.",
  privacy_title:"Privacy Policy",privacy_intro:"What we collect and why.",
  legal_updated:"",contact_email:"hello@example.com",contact_phone:"",address:"",
@@ -24,7 +24,7 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  footer_blurb:"Tracking India's startups, one row at a time.",copyright:"© 2026 Useful Startups. All rights reserved."},
 nav:[{Label:"Home",URL:"index.html",Location:"header",Order:1},{Label:"Ledger",URL:"ledger.html",Location:"both",Group:"Directories",Order:2},
  {Label:"News",URL:"news.html",Location:"both",Group:"Resources",Order:3},{Label:"About",URL:"about.html",Location:"both",Group:"Company",Order:4},
- {Label:"Team",URL:"team.html",Location:"both",Group:"Company",Order:5},{Label:"Contact",URL:"contact.html",Location:"both",Group:"Company",Order:6},{Label:"Buy Me a Beer",URL:"support.html",Location:"footer",Group:"Company",Order:7},
+ {Label:"Team",URL:"team.html",Location:"both",Group:"Company",Order:5},{Label:"Contact",URL:"contact.html",Location:"both",Group:"Company",Order:6},{Label:"Buy Me a Coffee",URL:"support.html",Location:"footer",Group:"Company",Order:7},
  {Label:"Terms",URL:"terms.html",Location:"footer",Group:"Resources",Order:7},{Label:"Privacy",URL:"privacy.html",Location:"footer",Group:"Resources",Order:8}],
 highlights:[{Value:"auto:startups",Label:"Startups tracked",Order:1},{Value:"Hourly",Label:"News refresh",Order:2},{Value:"100%",Label:"Free to browse",Order:3}],
 team:[{Name:"Founder Name",Role:"Founder",Bio:"Edit this in the Team tab of your Google Sheet.",Order:1}],
@@ -89,9 +89,12 @@ function shell(S,nav){
  const loc=(r,w)=>{const l=(r.Location||"header").toLowerCase();return l==="both"||l===w};
  const mark=S.logo_url?`<img src="${esc(drive(S.logo_url))}" alt="">`:esc(initials(S.site_name).charAt(0));
  const brand=`<a class="ul-brand" href="index.html"><span class="ul-mark">${mark}</span><span>${esc(S.site_name)}</span></a>`;
- const nv=document.createElement("div");nv.className="ul-nav";
+const fOn=S.failed_url&&!/^(no|false|0|hide)$/i.test(S.failed_show);let fDone=false;try{fDone=localStorage.getItem("ul_failed_bar")==="1"}catch(e){}
+ if(fOn&&!fDone){const ab=document.createElement("div");ab.className="ul-announce";ab.innerHTML=`<span>${esc(S.failed_bar)} <a href="${esc(url(S.failed_url))}" target="_blank" rel="noopener">${esc(S.failed_cta)} →</a></span><button type="button" aria-label="Dismiss">×</button>`;
+  ab.querySelector("button").onclick=()=>{ab.remove();try{localStorage.setItem("ul_failed_bar","1")}catch(e){}};document.body.insertBefore(ab,document.body.firstChild)}
+  const nv=document.createElement("div");nv.className="ul-nav";
  nv.innerHTML=`<div class="ul-nav-in">${brand}<nav class="ul-links" id="ulLinks">${items.filter(r=>loc(r,"header")).map(link).join("")}</nav><button class="ul-burger" aria-label="Menu" id="ulBurger">☰</button></div>`;
- document.body.insertBefore(nv,document.body.firstChild);
+ document.body.insertBefore(nv,document.querySelector(".ul-announce")?document.querySelector(".ul-announce").nextSibling:document.body.firstChild);
  addEventListener("scroll",()=>nv.classList.toggle("scrolled",scrollY>8),{passive:true});
  $("#ulBurger").onclick=()=>$("#ulLinks").classList.toggle("open");
  const sv=(p,f)=>`<svg viewBox="0 0 24 24" ${f?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'}>${p}</svg>`;
@@ -164,9 +167,10 @@ async function homePage(S,P,H){
  <div class="ul-pulse-side"><div class="ul-box rv"><h3>Recently added</h3><div id="ulRecent"></div></div>
  <div class="ul-box rv"><h3>Trending sectors</h3><div id="ulTrend"></div></div>
  <a class="ul-box ul-mapcta rv" href="ledger.html#heatmap"><h3>Heat map</h3><p>See which states India's startups are based in →</p></a></div></div></div></section>
+ ${S.failed_url&&!/^(no|false|0|hide)$/i.test(S.failed_show)?`<section class="ul-sec ul-failed-band"><div class="ul-wrap"><a class="ul-failed-cta rv" href="${esc(url(S.failed_url))}" target="_blank" rel="noopener"><span class="e">†</span><div><h3>${esc(S.failed_card_title)}</h3><p>${esc(S.failed_card_text)}</p></div><span class="ul-more">${esc(S.failed_cta)} →</span></a></div></section>`:""}
  ${steps.length?`<section class="ul-sec"><div class="ul-wrap"><h2>How it works</h2><ol class="ul-steps">${steps.map((r,i)=>`<li class="rv"><span class="ul-num">${String(i+1).padStart(2,"0")}</span><h3>${esc(r.Heading)}</h3><p>${inline(r.Body)}</p></li>`).join("")}</ol></div></section>`:""}
  <section class="ul-sec"><div class="ul-wrap"><div class="ul-eyebrow">Explore</div><h2>Everything in one place</h2><div class="ul-grid">${cards.map(r=>`<a class="ul-card rv" href="${esc(url(clean(r.Link)||"#"))}"><h3>${esc(r.Heading)}</h3><p>${inline(r.Body)}</p><span class="ul-more">Open →</span></a>`).join("")}</div></div></section>
- <section class="ul-sec ul-beer-band"><div class="ul-wrap"><a class="ul-beer-cta rv" href="support.html"><span class="e">🍺</span><div><h3>Enjoying Useful Startups?</h3><p>Buy us a beer and help keep it running.</p></div><span class="ul-more">Support us →</span></a></div></section>
+ <section class="ul-sec ul-beer-band"><div class="ul-wrap"><a class="ul-beer-cta rv" href="support.html"><span class="e">☕</span><div><h3>Enjoying Useful Startups?</h3><p>Buy us a coffee and help keep it running.</p></div><span class="ul-more">Support us →</span></a></div></section>
  <section class="ul-sec" id="ulNews" hidden><div class="ul-wrap"><div class="ul-head"><div><div class="ul-eyebrow">Latest</div><h2>From The Runway</h2></div><a class="ul-link" href="news.html">All stories →</a></div><div class="ul-grid" id="ulNewsGrid"></div></div></section>`;
  return out;
 }
@@ -203,65 +207,73 @@ function count(el){const v=el.dataset.v||"";const m=v.match(/^(\D*)([\d.,]+)(.*)
  const n=parseFloat(m[2].replace(/,/g,""));let t0;const f=t=>{t0=t0||t;const p=Math.min((t-t0)/1200,1);el.textContent=m[1]+Math.round(n*(1-Math.pow(1-p,3))).toLocaleString("en-IN")+m[3];if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
 
 
-// ====== Buy Me a Beer ======
-const TIERS=[{id:"beer",icon:"🍺",name:"Buy Me a Beer",amt:10},{id:"round",icon:"🍻",name:"Buy Me a Round",amt:50},{id:"cheers",icon:"🥂",name:"Keep the Cheers Coming",amt:100},{id:"party",icon:"🎉",name:"Party Sponsor",amt:500},{id:"bar",icon:"🏆",name:"Sponsor the Bar",amt:5000}];
-const FILL=[30,48,64,80,94],BADGES=[["🥇","Head Brewer","gold"],["🥈","Master Taster","silver"],["🥉","Chief Cheerer","bronze"],["🍺","Regular","reg"],["🍺","Regular","reg"]];
+// ====== Buy Me a Coffee ======
+const TIERS=[{id:"coffee",icon:"☕",name:"Buy Me a Coffee",amt:10},{id:"croissant",icon:"🥐",name:"Coffee & a Croissant",amt:50},{id:"refill",icon:"🍰",name:"Keep the Coffee Coming",amt:100},{id:"team",icon:"🎉",name:"Coffee for the Whole Team",amt:500},{id:"cafe",icon:"🏆",name:"Sponsor the Café",amt:5000}];
+const MIN_AMT=10,MAX_AMT=100000;
+const FILL=[20,32,44,52,60],BADGES=[["🥇","Head Barista","gold"],["🥈","Master Roaster","silver"],["🥉","Chief Brewer","bronze"],["☕","Regular","reg"],["☕","Regular","reg"]];
 const inr=n=>"₹"+Number(n).toLocaleString("en-IN");
 function supportPage(S){
- const bubbles=[[38,0],[52,.9],[64,1.7],[46,2.4],[58,.4],[70,1.2]].map(([x,d],i)=>`<circle class="bb" cx="${x}" cy="125" r="${2.2+i%3}" style="animation-delay:${d}s"/>`).join("");
- return `<section class="beer-hero"><div class="ul-aurora"></div><div class="ul-wrap"><div class="ul-eyebrow">Support us</div><h1>Buy Me a <em>Beer</em> <span class="e">🍺</span></h1><p class="ul-lead">${esc(S.beer_message)}</p></div></section>
+ const steam=[[44,0],[62,.8],[80,1.5]].map(([x,d])=>`<path class="st" d="M${x} 34c-6-8 6-12 0-22" style="animation-delay:${d}s"/>`).join("");
+ return `<section class="beer-hero"><div class="ul-aurora"></div><div class="ul-wrap"><div class="ul-eyebrow">Support us</div><h1>Buy Me a <em>Coffee</em> <span class="e">☕</span></h1><p class="ul-lead">${esc(S.coffee_message)}</p></div></section>
  <div class="ul-wrap"><div class="beer-grid"><div class="beer-card" id="beerCard">
-  <div class="beer-mugwrap"><svg class="beer-mug" id="beerMug" viewBox="0 0 126 146" aria-hidden="true"><defs><linearGradient id="bgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D27A"/><stop offset="1" stop-color="#C98A1B"/></linearGradient><clipPath id="glass"><path d="M22 30H86L80 126Q79 132 73 132H35Q29 132 28 126Z"/></clipPath></defs>
-   <path d="M86 46H100Q114 46 114 64V80Q114 98 100 98H82" fill="none" stroke="rgba(242,239,233,.5)" stroke-width="7" stroke-linecap="round"/>
-   <g clip-path="url(#glass)"><g class="fill" id="beerFill"><rect x="14" y="36" width="80" height="140" fill="url(#bgl)"/>${bubbles}</g></g>
-   <path d="M22 30H86L80 126Q79 132 73 132H35Q29 132 28 126Z" fill="rgba(242,239,233,.05)" stroke="rgba(242,239,233,.6)" stroke-width="3" stroke-linejoin="round"/>
-   <g class="foam" id="beerFoam" fill="#F2EFE9"><circle cx="30" cy="34" r="9"/><circle cx="44" cy="28" r="11"/><circle cx="60" cy="27" r="12"/><circle cx="76" cy="31" r="10"/><circle cx="84" cy="36" r="7"/></g></svg></div>
-  <h2 class="beer-h2">Pick your round</h2>
-  <div class="beer-tiers" role="radiogroup" aria-label="Donation amount">${TIERS.map((t,i)=>`<button type="button" class="beer-tier" role="radio" aria-checked="${i===0}" data-i="${i}"><span class="i">${t.icon}</span><b>${esc(t.name)}</b><span class="p">${inr(t.amt)}</span></button>`).join("")}</div>
+  <div class="beer-mugwrap"><svg class="beer-mug" id="beerMug" viewBox="0 0 140 132" aria-hidden="true"><defs><linearGradient id="cgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C79A5E"/><stop offset="1" stop-color="#6B4423"/></linearGradient><clipPath id="cup"><path d="M24 44H100V72Q100 106 62 106Q24 106 24 72Z"/></clipPath></defs>
+   <g class="steams" fill="none" stroke="rgba(242,239,233,.6)" stroke-width="3.5" stroke-linecap="round">${steam}</g>
+   <path d="M100 54H112Q127 54 127 70Q127 86 111 86H98" fill="none" stroke="rgba(242,239,233,.55)" stroke-width="7" stroke-linecap="round"/>
+   <g clip-path="url(#cup)"><g class="fill" id="beerFill"><rect x="18" y="44" width="90" height="140" fill="url(#cgl)"/><rect x="18" y="44" width="90" height="5" fill="#E5C48F" opacity=".85"/></g></g>
+   <path d="M24 44H100V72Q100 106 62 106Q24 106 24 72Z" fill="rgba(242,239,233,.05)" stroke="rgba(242,239,233,.62)" stroke-width="3" stroke-linejoin="round"/>
+   <ellipse cx="62" cy="112" rx="54" ry="8" fill="rgba(242,239,233,.12)" stroke="rgba(242,239,233,.45)" stroke-width="2.5"/></svg></div>
+  <h2 class="beer-h2">Pick your cup</h2>
+  <div class="beer-tiers" role="radiogroup" aria-label="Donation amount">${TIERS.map((t,i)=>`<button type="button" class="beer-tier" role="radio" aria-checked="${i===0}" data-i="${i}"><span class="i">${t.icon}</span><b>${esc(t.name)}</b><span class="p">${inr(t.amt)}</span></button>`).join("")}
+   <div class="beer-tier beer-custom" role="radio" tabindex="0" aria-checked="false" data-i="5"><span class="i">✏️</span><b>Custom amount</b><span class="p"><span class="rs">₹</span><input id="beerCustom" type="number" inputmode="numeric" min="${MIN_AMT}" max="${MAX_AMT}" step="1" placeholder="${MIN_AMT}+" aria-label="Custom amount in rupees"></span></div></div>
   <label class="beer-lbl" for="beerName">Your username <small>(shown on the leaderboard)</small></label>
   <input id="beerName" class="beer-input" maxlength="24" autocomplete="nickname" placeholder="e.g. StartupSam">
-  <button type="button" class="beer-pay" id="beerPay"><span>Buy Me a Beer</span><b id="beerAmt">${inr(TIERS[0].amt)}</b></button>
+  <button type="button" class="beer-pay" id="beerPay"><span>Buy Me a Coffee</span><b id="beerAmt">${inr(TIERS[0].amt)}</b></button>
   <div class="beer-msg" id="beerMsg" role="status" aria-live="polite"></div></div>
-  <aside class="beer-board"><div class="beer-board-h"><h2>Top 5 Beer Supporters</h2><span class="live"><i></i>Live</span></div><ol id="beerBoard" class="beer-list"></ol><p class="beer-note">Rankings update automatically after every successful payment.</p></aside></div>
+  <aside class="beer-board"><div class="beer-board-h"><h2>Top 5 Coffee Supporters</h2><span class="live"><i></i>Live</span></div><ol id="beerBoard" class="beer-list"></ol><p class="beer-note">Rankings update automatically after every successful payment.</p></aside></div>
   <p class="beer-fine">Contributions are voluntary and non-refundable gifts that help keep this website running. Payments are processed securely by Razorpay; we never see your card or UPI details. Usernames on the leaderboard are public.</p></div>`;
 }
 function loadExt(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`))return res();const x=document.createElement("script");x.src=src;x.onload=res;x.onerror=rej;document.head.appendChild(x)})}
 async function fetchBoard(){
  if(typeof SUPABASE_URL==="undefined")return null;
- try{const r=await fetch(`${SUPABASE_URL}/rest/v1/beer_leaderboard?select=username,total,contributions&order=total.desc,last_paid.asc&limit=5`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY},cache:"no-store"});
+ try{const r=await fetch(`${SUPABASE_URL}/rest/v1/coffee_leaderboard?select=username,total,contributions&order=total.desc,last_paid.asc&limit=5`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY},cache:"no-store"});
   const d=await r.json();return Array.isArray(d)?d:null}catch(e){return null}
 }
 let boardSig="";
 function paintBoard(rows,force){
  const ol=$("#beerBoard");if(!ol)return;
  const sig=JSON.stringify(rows);if(!force&&sig===boardSig)return;boardSig=sig;
- if(!rows||!rows.length){ol.innerHTML=`<li class="beer-empty">No supporters yet. Be the first to raise a glass! 🍻</li>`+[1,2,3,4].map(()=>`<li class="beer-row ghost"><span class="rk">·</span><span class="nm">—</span></li>`).join("");return}
+ if(!rows||!rows.length){ol.innerHTML=`<li class="beer-empty">No supporters yet. Be the first to buy us a coffee! ☕</li>`+[1,2,3,4].map(()=>`<li class="beer-row ghost"><span class="rk">·</span><span class="nm">—</span></li>`).join("");return}
  const mx=Math.max(...rows.map(r=>+r.total))||1;
- ol.innerHTML=rows.map((r,i)=>{const b=BADGES[i];return `<li class="beer-row r${i+1}" style="--d:${i*70}ms"><span class="rk" title="Rank ${i+1}">${b[0]}</span><div class="who"><b>${esc(r.username)}</b><span class="bd ${b[2]}">${b[1]}</span></div><div class="amt"><b data-n="${+r.total}">${inr(r.total)}</b><small>${r.contributions} cheer${+r.contributions===1?"":"s"}</small></div><i class="bar" style="--w:${Math.max(6,(+r.total/mx*100)).toFixed(0)}%"></i></li>`}).join("");
+ ol.innerHTML=rows.map((r,i)=>{const b=BADGES[i];return `<li class="beer-row r${i+1}" style="--d:${i*70}ms"><span class="rk" title="Rank ${i+1}">${b[0]}</span><div class="who"><b>${esc(r.username)}</b><span class="bd ${b[2]}">${b[1]}</span></div><div class="amt"><b>${inr(r.total)}</b><small>${r.contributions} cup${+r.contributions===1?"":"s"}</small></div><i class="bar" style="--w:${Math.max(6,(+r.total/mx*100)).toFixed(0)}%"></i></li>`}).join("");
 }
 async function refreshBoard(force){const d=await fetchBoard();if(d)paintBoard(d,force);else if(!boardSig)paintBoard([],true)}
-function confetti(){const f=["🍺","🍻","✨","🥂","🎉"];for(let i=0;i<26;i++){const e=document.createElement("span");e.className="beer-conf";e.textContent=f[i%f.length];e.style.cssText=`left:${Math.random()*100}vw;animation-delay:${(Math.random()*.5).toFixed(2)}s;font-size:${16+Math.random()*16|0}px;--dx:${(Math.random()*120-60)|0}px`;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}}
+function confetti(){const f=["☕","🥐","✨","🎉","🍰"];for(let i=0;i<26;i++){const e=document.createElement("span");e.className="beer-conf";e.textContent=f[i%f.length];e.style.cssText=`left:${Math.random()*100}vw;animation-delay:${(Math.random()*.5).toFixed(2)}s;font-size:${16+Math.random()*16|0}px;--dx:${(Math.random()*120-60)|0}px`;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}}
 function wireSupport(S){
- let sel=0;const tiers=[...document.querySelectorAll(".beer-tier")],pay=$("#beerPay"),name=$("#beerName"),msg=$("#beerMsg"),mug=$("#beerMug");
- try{name.value=localStorage.getItem("beer_name")||""}catch(e){}
- const level=i=>{const t=96-FILL[i];$("#beerFill").style.transform=`translateY(${t}px)`;$("#beerFoam").style.transform=`translateY(${t}px)`};
- const pick=i=>{sel=i;tiers.forEach((b,k)=>b.setAttribute("aria-checked",k===i));$("#beerAmt").textContent=inr(TIERS[i].amt);level(i);mug.classList.remove("pop");void mug.getBoundingClientRect();mug.classList.add("pop")};
- tiers.forEach((b,i)=>{b.onclick=()=>pick(i);b.onkeydown=e=>{if(e.key==="ArrowDown"||e.key==="ArrowRight"){e.preventDefault();const n=(i+1)%5;tiers[n].focus();pick(n)}if(e.key==="ArrowUp"||e.key==="ArrowLeft"){e.preventDefault();const n=(i+4)%5;tiers[n].focus();pick(n)}}});
+ let sel=0;const rows=[...document.querySelectorAll(".beer-tier")],pay=$("#beerPay"),name=$("#beerName"),msg=$("#beerMsg"),mug=$("#beerMug"),custom=$("#beerCustom");
+ try{name.value=localStorage.getItem("coffee_name")||""}catch(e){}
+ const amount=()=>sel<5?TIERS[sel].amt:(parseInt(custom.value,10)||0);
+ const levelFor=n=>n<50?20:n<100?32:n<500?44:n<5000?52:60;
+ const level=()=>{const t=62-(sel<5?FILL[sel]:levelFor(amount()||MIN_AMT));$("#beerFill").style.transform=`translateY(${t}px)`};
+ const paint=()=>{const n=amount();$("#beerAmt").textContent=n?inr(n):"₹–";level()};
+ const pick=i=>{sel=i;rows.forEach((b,k)=>b.setAttribute("aria-checked",k===i));if(i===5)custom.focus();paint();mug.classList.remove("pop");void mug.getBoundingClientRect();mug.classList.add("pop")};
+ rows.forEach((b,i)=>{b.onclick=()=>{if(sel!==i||i===5)pick(i)};b.onkeydown=e=>{if(e.target===custom)return;if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(i)}if(e.key==="ArrowDown"||e.key==="ArrowRight"){e.preventDefault();const n=(i+1)%6;rows[n].focus();pick(n)}if(e.key==="ArrowUp"||e.key==="ArrowLeft"){e.preventDefault();const n=(i+5)%6;rows[n].focus();pick(n)}}});
+ custom.oninput=()=>{if(sel!==5){sel=5;rows.forEach((b,k)=>b.setAttribute("aria-checked",k===5))}paint()};
  pay.onmouseenter=()=>{mug.classList.remove("clink");void mug.getBoundingClientRect();mug.classList.add("clink")};
- level(0);
+ paint();
  const say=(t,c)=>{msg.textContent=t;msg.className="beer-msg "+(c||"")};
  pay.onclick=async()=>{
-  const u=name.value.replace(/\s+/g," ").trim();
+  const u=name.value.replace(/\s+/g," ").trim(),n=amount();
   if(!/^[A-Za-z0-9][A-Za-z0-9 ._-]{1,23}$/.test(u)){say("Please enter a username: 2–24 letters or numbers (spaces . _ - allowed).","err");name.focus();return}
-  try{localStorage.setItem("beer_name",u)}catch(e){}
+  if(sel===5&&(!Number.isInteger(n)||n<MIN_AMT||n>MAX_AMT)){say(`Custom amount must be a whole number from ${inr(MIN_AMT)} to ${inr(MAX_AMT)}.`,"err");custom.focus();return}
+  try{localStorage.setItem("coffee_name",u)}catch(e){}
   pay.disabled=true;pay.classList.add("busy");say("Opening secure checkout…");
   try{
-   const r=await fetch("/api/beer/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tier:TIERS[sel].id,name:u})});
+   const r=await fetch("/api/coffee/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(sel===5?{tier:"custom",amount:n,name:u}:{tier:TIERS[sel].id,name:u})});
    if(r.status===404||r.status===501){say("Payments aren't switched on yet. Please check back soon!","err");return}
-   const o=await r.json().catch(()=>({}));if(!r.ok||!o.order_id){say("We couldn't start the payment. Please try again in a moment.","err");return}
+   const o=await r.json().catch(()=>({}));if(!r.ok||!o.order_id){say(o.error==="bad_amount"?`Amount must be ${inr(MIN_AMT)} to ${inr(MAX_AMT)}.`:"We couldn't start the payment. Please try again in a moment.","err");return}
    await loadExt("https://checkout.razorpay.com/v1/checkout.js");
-   const rz=new Razorpay({key:o.key_id,amount:o.amount,currency:"INR",order_id:o.order_id,name:S.site_name,description:TIERS[sel].name,notes:{username:u},theme:{color:"#D9A441"},
-    handler:()=>{say(`Cheers, ${u}! 🍻 Your ${inr(TIERS[sel].amt)} is being confirmed. The leaderboard updates in a moment.`,"ok");confetti();let n=0;const t=setInterval(()=>{refreshBoard();if(++n>=10)clearInterval(t)},3000);setTimeout(()=>refreshBoard(),1200)},
+   const rz=new Razorpay({key:o.key_id,amount:o.amount,currency:"INR",order_id:o.order_id,name:S.site_name,description:sel===5?"Custom coffee":TIERS[sel].name,notes:{username:u},theme:{color:"#D9A441"},
+    handler:()=>{say(`Thank you, ${u}! ☕ Your ${inr(n)} is being confirmed. The leaderboard updates in a moment.`,"ok");confetti();let k=0;const t=setInterval(()=>{refreshBoard();if(++k>=10)clearInterval(t)},3000);setTimeout(()=>refreshBoard(),1200)},
     modal:{ondismiss:()=>{say("")}}});
    rz.on&&rz.on("payment.failed",()=>say("The payment didn't go through. You haven't been charged. Please try again.","err"));
    rz.open();
@@ -270,7 +282,6 @@ function wireSupport(S){
  };
  refreshBoard(true);setInterval(()=>{if(!document.hidden)refreshBoard()},30000);
 }
-
 // ====== boot ======
 function themes(){
  const add=h=>{const l=document.createElement("link");l.rel="stylesheet";l.href=h;document.head.appendChild(l)};

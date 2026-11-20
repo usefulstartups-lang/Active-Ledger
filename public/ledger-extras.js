@@ -239,9 +239,8 @@ function draw(){
   list("hmTop",ts,ts.length?ts[0][1]:1);list("hmCities",tc,tc.length?tc[0][1]:1);
   document.querySelectorAll("#hmTop li[data-i]").forEach((li,i)=>li.onclick=()=>open("State — "+ts[i][0],ts[i][2]));
   document.querySelectorAll("#hmCities li[data-i]").forEach((li,i)=>li.onclick=()=>open("City — "+tc[i][0],tc[i][2]));
-  const placed=ALL.length-Object.values(unplaced).reduce((a,b)=>a+b,0);
-  const miss=Object.keys(unplaced);
-  document.getElementById("hmNote").textContent=`${placed} of ${ALL.length} startups placed`+(miss.length?` · not placed: ${miss.slice(0,5).join(", ")}${miss.length>5?"…":""}`:"");
+  const stN=Object.values(by).filter(v=>v.rows.length).length,inN=Object.values(by).reduce((n,v)=>n+v.rows.length,0);
+  document.getElementById("hmNote").textContent=inN?`${inN} startups across ${stN} state${stN===1?"":"s"}`:"";
 }
 draw();
 // The ledger redraws its count pill whenever data loads/changes — use that as our cue to refresh.
