@@ -1,4 +1,4 @@
-   const { handler } = require('../netlify/functions/fetch-news.js');
+   const { handler } = require('./fetch-news.js');
 
    const q = {};
    if (process.env.ONLY) q.only = process.env.ONLY;
