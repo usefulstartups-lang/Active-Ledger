@@ -1,93 +1,40 @@
-# The Runway — Startup News Feed
+# Useful Startups
 
-A self-updating startup/business news feed with likes, comments, and share
-buttons, built to embed inside a Google Sites page.
+India's startup **Ledger** + hourly **news**.
 
-**Stack:** Supabase (free database) + Netlify (free hosting + scheduled
-function). Neither requires a credit card on the free tier.
-
----
-
-## 1. Create your Supabase project
-
-1. Go to https://supabase.com and sign up (free).
-2. Click **New project**. Pick any name and a database password (save it
-   somewhere).
-3. Once it's ready, open the **SQL Editor** (left sidebar) → **New query**.
-4. Open `supabase-setup.sql` from this project, copy all of it, paste it in,
-   and click **Run**. This creates your `articles`, `likes`, and `comments`
-   tables.
-5. Go to **Project Settings → API**. You'll need two values from this page
-   later:
-   - **Project URL**
-   - **anon public** key
-   - **service_role** key (keep this one secret — never put it in the
-     browser code)
-
-## 2. Add your keys to the frontend
-
-Open `public/config.js` and replace the placeholders:
-
-```js
-const SUPABASE_URL = 'https://your-project-id.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-public-key';
+```
+Google Sheet  ──(Apps Script sync)──▶  Supabase  ──▶  Website (Netlify)
+ control panel                          database       reads Supabase only
 ```
 
-## 3. Push this project to GitHub
+* **Google Sheet = your control panel.** Add/edit/delete startups, change page text, nav, team, hide rows (`Visible = no`) exactly as before.
+* **Supabase = the database.** The site never reads the Sheet directly any more.
+* **Netlify** hosts `public/` and the Buy-Me-a-Coffee functions. **GitHub Actions** fetches news hourly.
 
-Netlify deploys from a GitHub repo.
+## Folder map
+| Path | What it is |
+|---|---|
+| `public/` | The website (static). `data.js` reads Supabase, `site.js` = nav/footer/home, `ledger.html` + `ledger-extras.js` = Ledger, `share.js` = share report, `news.html` + `app.js` = news |
+| `supabase/schema.sql` | Whole database. Safe to re-run |
+| `google-sheet/sync-to-supabase.gs` | Sheet → Supabase sync (paste into the Sheet's Apps Script) |
+| `google-sheet/contact-form.gs`, `templates/` | Contact form script; starter CSVs for the Settings/Nav/Pages/Team/Highlights tabs |
+| `netlify/functions/` | `coffee-order.mjs`, `coffee-webhook.mjs` (Razorpay) |
+| `scripts/` + `.github/workflows/fetch-news.yml` | Hourly news fetcher |
 
-1. Create a new repository on GitHub (e.g. `startup-news-feed`).
-2. From inside this project folder:
-   ```
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/startup-news-feed.git
-   git push -u origin main
-   ```
+## Setup (once)
+1. **Supabase** → SQL Editor → paste `supabase/schema.sql` → Run.
+2. **Sheet sync** → open the Sheet → Extensions → Apps Script → new file, paste `google-sheet/sync-to-supabase.gs`.
+   Project Settings → Script properties: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (service_role key). Run `installSync` once and approve.
+   From then on edits sync ~1 minute after you stop typing; menu **Useful Startups → Sync to website now** is instant.
+3. **Netlify** env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
+   Razorpay webhook URL: `https://YOUR-SITE/api/coffee/webhook`, event `payment.captured`.
+4. **GitHub** repo secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (news fetcher).
+5. `public/config.js`: set `SITE_URL` to your real domain (or add a Settings row `site_url`).
 
-## 4. Deploy to Netlify
+The service_role key goes only into Apps Script / Netlify / GitHub secrets, never into `public/`.
 
-1. Go to https://netlify.com and sign up (free), connect your GitHub account.
-2. Click **Add new site → Import an existing project**, pick your repo.
-3. Build settings: leave the defaults (this project's `netlify.toml` already
-   tells Netlify where the site and functions live).
-4. Before deploying, go to **Site configuration → Environment variables**
-   and add:
-   - `SUPABASE_URL` → your Project URL
-   - `SUPABASE_SERVICE_ROLE_KEY` → your service_role key
-5. Click **Deploy site**. You'll get a live URL like
-   `https://your-site-name.netlify.app`.
+## Sheet tabs → website
+`Active Ledger` (gid 0) → `ledger` · `Founders` → `founders` · `Settings` · `Nav` · `Pages` · `Team` · `Highlights` · optional `Unlisted Shares`.
+Tabs are matched by gid (listed at the top of the `.gs` file), so renaming a tab is safe. Missed searches and suggestions still go to your existing Apps Script web apps / Sheet tabs.
 
-## 5. Test the news fetcher
-
-The `fetch-news` function runs automatically every hour once deployed, but
-you can trigger it manually to test:
-
-- Go to **Netlify dashboard → Functions → fetch-news → Trigger function**,
-  or visit `https://your-site-name.netlify.app/.netlify/functions/fetch-news`
-  in your browser.
-- Then reload your site — articles should appear.
-
-## 6. Embed it into Google Sites
-
-1. Open your Google Sites page in edit mode.
-2. Click **Insert → Embed → By URL**.
-3. Paste your Netlify URL (`https://your-site-name.netlify.app`).
-4. Resize the embed box to however tall you want the feed to appear.
-5. Publish your site.
-
----
-
-### Customizing
-
-- **Change news sources:** edit the `FEEDS` array in
-  `netlify/functions/fetch-news.js`. Any site with an RSS feed works — add
-  the feed URL and a display name.
-- **Change fetch frequency:** edit the `schedule` value in `netlify.toml`
-  (uses cron syntax, e.g. `"0 */6 * * *"` for every 6 hours).
-- **Moderate comments:** right now anyone can comment. For a public site,
-  consider adding a Supabase Edge Function or a manual review step before
-  comments go live — happy to help you add that later.
+Settings text supports: blank line = paragraph, `**bold**`, `[text](url)`, `- ` bullets, `## ` subheading.

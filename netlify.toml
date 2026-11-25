@@ -2,6 +2,4 @@
   publish = "public"
   functions = "netlify/functions"
 
-# Runs the fetch-news function automatically every hour.
-[functions."fetch-news"]
-  schedule = "@hourly"
+# News is fetched hourly by GitHub Actions (.github/workflows/fetch-news.yml), not by Netlify.
