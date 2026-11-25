@@ -1,5 +1,0 @@
-[build]
-  publish = "public"
-  functions = "netlify/functions"
-
-# News is fetched hourly by GitHub Actions (.github/workflows/fetch-news.yml), not by Netlify.
