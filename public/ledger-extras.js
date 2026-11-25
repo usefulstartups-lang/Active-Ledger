@@ -281,29 +281,29 @@ const KEEPU=new Set(["NCR","UK","USA","UAE","IIT","IIM"]);
 function pc(s){return String(s==null?"":s).trim().toLowerCase().replace(/(^|[\s\-'’.(\/])([a-z\u00c0-\u024f])/g,(m,a,b)=>a+b.toUpperCase()).replace(/[A-Za-z]+/g,w=>KEEPU.has(w.toUpperCase())?w.toUpperCase():w)}
 const pcList=s=>String(s||"").split(",").map(pc).filter(Boolean).join(", ");
 function fixNames(){if(typeof ALL==="undefined"||!ALL)return;ALL.forEach(r=>{if(r["Founders"])r["Founders"]=pcList(r["Founders"]);if(r["Headquarters"])r["Headquarters"]=pc(r["Headquarters"])})}
-const baseParse=window.parseCsvText;
+const baseSet=window.setLedger;
 let hashDone=false;
 function openHash(){if(hashDone||typeof ALL==="undefined")return;const m=location.hash.match(/^#s=(.+)$/);if(!m)return;let n="";try{n=decodeURIComponent(m[1]).toLowerCase()}catch(x){return}
   const row=ALL.find(r=>cl(r["Startup Name"]).toLowerCase()===n);if(row&&typeof window.openModal==="function"){hashDone=true;window.openModal(row)}}
-if(typeof baseParse==="function")window.parseCsvText=function(t){baseParse(t);fixNames();if(typeof applyFilters==="function")applyFilters();openHash()};
+if(typeof baseSet==="function")window.setLedger=function(r){baseSet(r);fixNames();if(typeof applyFilters==="function")applyFilters();openHash()};
 const baseFounder=window.openFounderPopup;
 if(typeof baseFounder==="function")window.openFounderPopup=function(n){baseFounder(n);const h=document.querySelector("#listModalContent h2");if(h)h.textContent=pc(h.textContent)};
 fixNames();
 
 /* ---------- 4. UNLISTED SHARES (Oak Sprouts) ----------
-   Paste the published-CSV link of your "Unlisted Shares" sheet below. Its first column (or a column named
-   "Startup Name") holds the company names you can supply. Optional columns: Also Known As, Indicative Price,
-   Min Investment, Visible. */
-const UNLISTED_CSV_URL="";
+   Add a tab named "Unlisted Shares" to the Google Sheet. Its first column (or a column named "Startup Name")
+   holds the company names you can supply. Optional columns: Also Known As, Indicative Price, Min Investment,
+   Visible. It syncs like every other tab. While the tab doesn't exist, this feature stays switched off. */
 const OAK={name:"Oak Sprouts",email:"team.oaksprouts@gmail.com",phone:"+91 77889 90390",whatsapp:"917788990390",website:"https://oaksprouts.com"};
 const nk=s=>String(s||"").toLowerCase().replace(/\b(pvt|private|ltd|limited|llp|inc)\b/g," ").replace(/[^a-z0-9]/g,"");
 let UNL=null;
 const unlName=r=>cl(r["Startup Name"])||cl(r["Company Name"])||cl(r["Name"])||cl(Object.values(r)[0]);
 function loadUnl(){
-  if(!UNLISTED_CSV_URL||typeof Papa==="undefined")return;
-  fetch(UNLISTED_CSV_URL,{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{
+  if(typeof ULData==="undefined")return;
+  ULData.load(["unlisted"]).then(d=>{
+    if(!d.unlisted){UNL=null;return}
     const m=new Map();
-    Papa.parse(t,{header:true,skipEmptyLines:true}).data.forEach(r=>{
+    d.unlisted.forEach(r=>{
       if(/^(no|false|0|hide|hidden)$/i.test(cl(r["Visible"])))return;
       [unlName(r)].concat(cl(r["Also Known As"]).split(",")).forEach(n=>{if(n&&n.trim())m.set(nk(n),r)});
     });
@@ -323,7 +323,7 @@ const DISC="Unlisted shares are not traded on a stock exchange. They carry highe
 function openUnl(row,s){
   const name=esc(cl(row["Startup Name"])),raw=cl(row["Startup Name"]);
   let ov=document.getElementById("unlOverlay");
-  if(!ov){ov=document.createElement("div");ov.className="overlay";ov.id="unlOverlay";ov.style.zIndex=175;ov.innerHTML='<div class="modal" id="unlModal"></div>';document.body.appendChild(ov);
+  if(!ov){ov=document.createElement("div");ov.className="overlay";ov.id="unlOverlay";ov.style.zIndex=320;ov.innerHTML='<div class="modal" id="unlModal"></div>';document.body.appendChild(ov);
     ov.addEventListener("click",e=>{if(e.target===ov)ov.classList.remove("open")})}
   const m=document.getElementById("unlModal");
   const links=(msg)=>`<a class="visit-btn" href="${wa(msg)}" target="_blank" rel="noopener">Chat on WhatsApp</a>

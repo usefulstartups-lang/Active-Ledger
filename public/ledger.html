@@ -3,11 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Search, filter and compare India's startups by sector, tech and investors.">
+<meta property="og:title" content="The Startup Ledger | Useful Startups">
+<meta property="og:description" content="Search, filter and compare India's startups by sector, tech and investors.">
+<meta property="og:image" content="https://usefulstartups.in/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <script src="preloader.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
 <title>The Ledger — Indian Startup Directory</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --ink: #0B1220;
@@ -248,7 +254,7 @@
     align-items: center;
     border-bottom: 1px solid var(--rule);
     position: sticky;
-    top: var(--ul-nav-h, 0px);
+    top: calc(var(--ul-nav-h, 0px) + var(--ul-search-h, 0px));
     background: rgba(11,18,32,0.92);
     backdrop-filter: blur(6px);
     z-index: 10;
@@ -363,7 +369,7 @@
   /* ---------- Modal ---------- */
   .overlay{
     display:none; position: fixed; inset:0; background: rgba(11,18,32,0.82);
-    z-index: 100; padding: 40px 20px; overflow-y:auto;
+    z-index: 300; padding: 40px 20px; overflow-y:auto;
   }
   .overlay.open{ display:block; }
   #listOverlay{ z-index: 150; }
@@ -454,18 +460,61 @@
     .field-grid{ grid-template-columns: 1fr; }
     .stat-row{ gap: 24px; }
   }
+
+  /* ---------- Top search bar (always reachable: sticks under the nav) ---------- */
+  .search-top{ position:sticky; top:var(--ul-nav-h,0px); z-index:20; background:rgba(11,18,32,0.94); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--rule); }
+  .search-top-in{ max-width:1180px; margin:0 auto; padding:12px 24px; position:relative; }
+  .search-top-in svg{ position:absolute; left:40px; top:50%; transform:translateY(-50%); width:19px; height:19px; color:var(--gold); pointer-events:none; }
+  .search-top input[type="text"]{ width:100%; flex:none; height:48px; padding:0 84px 0 46px; font-size:15.5px; border-radius:10px; }
+  .search-top .search-clear{ position:absolute; right:36px; top:50%; transform:translateY(-50%); display:none; width:30px; height:30px; border:0; border-radius:50%; background:rgba(242,239,233,.08); color:var(--paper-dim); font-size:18px; line-height:1; cursor:pointer; }
+  .search-top .search-clear:hover{ background:rgba(242,239,233,.16); color:var(--paper); }
+  .search-top.has-text .search-clear{ display:block; }
+  .search-top kbd{ position:absolute; right:42px; top:50%; transform:translateY(-50%); font:11px 'IBM Plex Mono',monospace; color:var(--paper-dim); border:1px solid var(--rule); border-radius:4px; padding:2px 7px; pointer-events:none; }
+  .search-top.has-text kbd, .search-top:focus-within kbd{ display:none; }
+  @media(max-width:700px){ .search-top kbd{ display:none; } .search-top-in{ padding:10px 14px; } .search-top-in svg{ left:28px; } .search-top .search-clear{ right:22px; } }
+
+  /* ---------- Share ---------- */
+  .card-actions, .modal-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .modal-actions{ margin-bottom:24px; }
+  .card-actions .compare-btn, .modal-actions .compare-btn{ margin-top:0; }
+  .share-btn{ border:1px solid var(--gold-dim); background:transparent; color:var(--gold); border-radius:3px; padding:7px 10px; font:11px 'IBM Plex Mono',monospace; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .share-btn svg{ width:12px; height:12px; }
+  .share-btn:hover{ background:var(--gold); color:var(--ink); }
+  .modal-actions .share-btn{ font-size:11px; padding:7px 12px; }
+  #shareOverlay{ z-index:310; }
+  #shareModalContent{ max-width:460px; }
+  .sh-sub{ color:var(--paper-dim); font-size:14px; line-height:1.5; margin:0 0 20px; }
+  .sh-primary{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--gold); color:var(--ink); border:0; border-radius:8px; padding:14px 18px; font:600 14px 'Space Grotesk',sans-serif; cursor:pointer; }
+  .sh-primary:hover{ background:#eab554; }
+  .sh-primary:disabled{ opacity:.6; cursor:progress; }
+  .sh-primary svg, .sh-opt svg{ width:17px; height:17px; flex:none; }
+  .sh-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .sh-opt{ display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--rule); background:var(--ink-2); color:var(--paper); border-radius:8px; padding:12px 10px; font:500 13.5px 'Space Grotesk',sans-serif; cursor:pointer; text-decoration:none; }
+  .sh-opt:hover{ border-color:var(--gold); }
+  .sh-status{ min-height:20px; margin-top:14px; font:12px 'IBM Plex Mono',monospace; color:var(--paper-dim); text-align:center; }
+  .sh-status.err{ color:var(--red); } .sh-status.ok{ color:#6fbf73; }
+  .sh-note{ margin-top:6px; font-size:11.5px; color:var(--paper-dim); text-align:center; opacity:.8; }
 </style>
 </head>
 <body>
 
 <div class="ticker-wrap"><div class="ticker" id="ticker"></div></div>
 
+<div class="search-top" id="searchTop" role="search">
+  <div class="search-top-in">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="text" id="search" placeholder="Search the Ledger by startup, founder or investor…" autocomplete="off" aria-label="Search the Ledger" enterkeyhint="search">
+    <kbd aria-hidden="true">/</kbd>
+    <button type="button" class="search-clear" id="searchClear" aria-label="Clear search">&times;</button>
+  </div>
+</div>
+
 <header>
   <div class="header-flex">
     <div class="header-text">
       <div class="eyebrow">Vol. 01 — Live Feed</div>
       <h1>The Startup <em>Ledger</em></h1>
-      <p class="sub">A running register of India's startups — who's building what, who's backing them, and where they stand. Sourced straight from the sheet, updated the moment a new row lands.</p>
+      <p class="sub">A running register of India's startups — who's building what, who's backing them, and where they stand. Sourced, reviewed and kept up to date.</p>
       <div class="stat-row" id="statRow"></div>
       <button class="suggest-btn" onclick="openSubmitModal()">+ Suggest a startup</button>
     </div>
@@ -474,7 +523,6 @@
 </header>
 
 <div class="controls">
-  <input type="text" id="search" placeholder="Search by name, founder, or investor…">
   <select id="sectorFilter"><option value="">All sectors</option></select>
   <select id="techFilter"><option value="">All underlying tech</option></select>
   <select id="statusFilter"><option value="">All status</option></select>
@@ -485,7 +533,6 @@
     <option value="featured">Sort: Featured first</option>
   </select>
   <span class="count-pill" id="countPill">loading…</span>
-  <span class="count-pill" id="syncBadge" style="margin-left:0;"></span>
 </div>
 
 <main>
@@ -508,6 +555,10 @@
 
 <div class="overlay" id="overlay">
   <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="overlay" id="shareOverlay">
+  <div class="modal" id="shareModalContent"></div>
 </div>
 
 <div class="overlay" id="listOverlay">
@@ -577,42 +628,19 @@
 </div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnzz7ZtIZdVOzq9FJLG0x1Hz2Y6XYNkTsveYm_sJheBoPIP-jhL27SBGl57CLMJirXvzjSQ4X-CMmB/pub?gid=0&single=true&output=csv";
-
-// Baked-in snapshot of the sheet, used so the page works immediately even when the
-// live network request is blocked by the preview sandbox. If this file is hosted on
-// a real domain (GitHub Pages, Netlify, your own server, etc.), the live fetch below
-// will succeed and silently replace this snapshot with fresh data on every page load.
-const FALLBACK_CSV = `Startup Name,Tagline / Description,Headquarters,Founded In,Funding Amount,Funding Stage,Business Model,Founders,Sector,Team Size,Primary Competition,Key Investors,User Base,Logo URL,Website URL,Featured,Status,Tags,Underlying Tech,Competitive Edge
-Aigenc.ai,Building The AI Martech Stack,Delhi NCR,2026,Bootstrapped,Pre-Seed,B2B,"Vishal Gupta, Prashant Sinha, Sumit Solanki",Horizontal SaaS,2-10,"Envigo, Keenfolks",-,-,https://drive.google.com/file/d/1kPAVtsbsCMVeL74AFKJd9KjiN4iVsNe5/view?usp=sharing,https://aigenc.ai/,Yes,Active,"AI, Generative AI, MarTech, Marketing, Creative Intelligence, Advertising, SaaS, B2B","LLM Orchestration, Ad Creative Generation"
-AnduraX,Making Return From Space As Routine As Aviation,Hyderabad,2024,Undisclosed,Seed,"B2B, B2G","Sree Supranayi Kanamarlapudi, Nirvik Choudhury",Space Tech,2-10,"AgenticOrg, Kartha AI, SpaceX (US), Sierra Space (US)",Riceberg Ventures,-,https://drive.google.com/file/d/1wjVg9Eri_3hdFL0VImwDW4PW8kjRULbK/view?usp=sharing,https://www.andurax.com/,Yes,Active,"SpaceTech, Aerospace, Rockets, Reusable Launch Vehicle, Autonomous Systems, DeepTech, Defence, Propulsion","Reusable Rocket Propulsion, Autonomous Guidance & Control"
-Arta AI,Infrastructure For Modern Brand Builders,Surat,2025,Bootstrapped,Pre-Seed,B2B,Ritesh Shah,Ecommerce Enabler,2-10,"ShopOS, Interakt",Peak XV Partners,-,https://drive.google.com/file/d/1B0iKUNQdZW_bFpNQ7Q1pKMyXAd5UhyCs/view?usp=sharing,https://arta.ai/,-,Active,"FinTech, AI, WealthTech, Generative AI, Financial Advisory, Wealth Management, Investment, B2B SaaS","LLM Orchestration, Payment Orchestration"
-Astrobase Space,Building Operational Backbone For Space Access,Ahmedabad,2024,Undisclosed,Seed,B2B,"Devakumar Thammisetty, Neeraj Khandelwal",Space Tech,11-50,"Skyroot Aerospace, Agnikul Cosmos",IN-SPACe,-,https://drive.google.com/file/d/1LcoGvBiHJcFEjnUKcBrnJUKnoXypJE-H/view?usp=sharing,https://www.astrobase.in/,Yes,Active,"SpaceTech, Aerospace, Rocket Engines, Propulsion, Launch Vehicles, DeepTech, Defence, NewSpace","Reusable Rocket Propulsion, Autonomous Guidance & Control"`;
-
 // ============================================================
-// FOUNDERS LOOKUP
-// A separate small tab — one row per person — so a founder's
-// LinkedIn and business history only has to be entered once, even
-// if they appear on multiple startup rows. Fetched independently
-// from the main sheet; if this fails or isn't configured yet, the
-// page still works fine, founder names just won't be clickable.
+// DATA: Supabase (synced from the Google Sheet by google-sheet/sync-to-supabase.gs).
+// Rows arrive as objects keyed by the Sheet's column headers. See data.js.
 //
-// SETUP REQUIRED: create a "Founders" tab with exactly these
-// headers: Founder Name, LinkedIn URL, Startups / Businesses
-// (comma-separated for multiple). Publish that tab to web as CSV
-// (same process as your other tabs) and paste the link below.
+// FOUNDERS: a separate "Founders" tab, one row per person, so a founder's LinkedIn and business
+// history is entered once. Headers: Founder Name, LinkedIn URL, Startups / Businesses (comma-separated).
+// If it's missing, founder names simply aren't clickable.
 // ============================================================
-const FOUNDERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnzz7ZtIZdVOzq9FJLG0x1Hz2Y6XYNkTsveYm_sJheBoPIP-jhL27SBGl57CLMJirXvzjSQ4X-CMmB/pub?gid=245996823&single=true&output=csv";
-
-const FOUNDERS_FALLBACK_CSV = `Founder Name,LinkedIn URL,Startups / Businesses
-Vishal Gupta,https://linkedin.com/in/example,"Aigenc.ai, A previous martech venture (not tracked)"`;
-
 let FOUNDERS_LOOKUP = {};
 
-function buildFoundersLookup(text){
-  const results = Papa.parse(text, { header: true, skipEmptyLines: true });
+function buildFoundersLookup(rows){
   const lookup = {};
-  results.data.forEach(row => {
+  (rows || []).forEach(row => {
     const name = clean(row['Founder Name']);
     if (!name) return;
     lookup[name.toLowerCase()] = {
@@ -622,26 +650,6 @@ function buildFoundersLookup(text){
     };
   });
   return lookup;
-}
-
-function loadFoundersData(){
-  // Parse the fallback immediately so founder pills work even before (or without) a live fetch.
-  FOUNDERS_LOOKUP = buildFoundersLookup(FOUNDERS_FALLBACK_CSV);
-
-  if(!FOUNDERS_CSV_URL || FOUNDERS_CSV_URL.indexOf("PASTE_YOUR") === 0){
-    console.warn("Founders CSV not configured yet — founder pills will use the fallback snapshot only.");
-    return;
-  }
-
-  fetch(FOUNDERS_CSV_URL, { cache: "no-store" })
-    .then(res => { if(!res.ok) throw new Error(`HTTP ${res.status}`); return res.text(); })
-    .then(text => {
-      if(!text || text.trim().length === 0) throw new Error("Empty response");
-      FOUNDERS_LOOKUP = buildFoundersLookup(text);
-    })
-    .catch(() => {
-      // Silent fail — fallback lookup is already in place, same philosophy as the main CSV fetch.
-    });
 }
 
 let ALL = [];
@@ -708,12 +716,27 @@ function render(list){
         </div>
         <div class="sector-tag">${clean(row['Sector']) || '—'}</div>
       </div>
-      <button type="button" class="compare-btn" data-compare="${encodeURIComponent(row['Startup Name'])}">+ Compare</button>
+      <div class="card-actions">
+        <button type="button" class="compare-btn" data-compare="${encodeURIComponent(row['Startup Name'])}">+ Compare</button>
+        <button type="button" class="share-btn" aria-label="Share ${escapeCompareText(row['Startup Name'])}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg> Share</button>
+      </div>
     `;
     card.addEventListener('click', ()=> openModal(row));
     card.querySelector('.compare-btn').addEventListener('click', e=>{ e.stopPropagation(); toggleCompare(row); });
+    card.querySelector('.share-btn').addEventListener('click', e=>{ e.stopPropagation(); openShare(row); });
     grid.appendChild(card);
   });
+}
+
+
+// ---- Share: builds a structured PDF report. share.js is only downloaded the first time someone shares. ----
+function openShare(row){
+  if (window.ULShare) return window.ULShare.open(row);
+  const sc = document.createElement('script');
+  sc.src = 'share.js';
+  sc.onload = () => window.ULShare && window.ULShare.open(row);
+  sc.onerror = () => alert("Couldn't open the share options. Please try again.");
+  document.head.appendChild(sc);
 }
 
 function openModal(row){
@@ -742,7 +765,10 @@ function openModal(row){
       </div>
     </div>
     <p class="modal-tagline">${row['Tagline / Description'] || ''}</p>
-    <button type="button" class="compare-btn" id="modalCompareBtn">+ Add to comparison</button>
+    <div class="modal-actions">
+      <button type="button" class="compare-btn" id="modalCompareBtn">+ Add to comparison</button>
+      <button type="button" class="share-btn" id="modalShareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg> Share report</button>
+    </div>
     <div class="field-grid">
       ${fields.filter(f=>clean(f[1])).map(f=>`<div class="field"><label>${f[0]}</label><div>${f[1]}</div></div>`).join('')}
     </div>
@@ -755,6 +781,7 @@ function openModal(row){
 
   const modalCompareBtn = document.getElementById('modalCompareBtn');
   modalCompareBtn.addEventListener('click', ()=> toggleCompare(row));
+  document.getElementById('modalShareBtn').addEventListener('click', ()=> openShare(row));
   syncModalCompareButton(row);
 
   // Founders — click one to see their LinkedIn + full business history.
@@ -930,12 +957,6 @@ document.getElementById('submitForm').addEventListener('submit', function(e){
     return;
   }
 
-  if(!SUBMISSION_APPS_SCRIPT_URL || SUBMISSION_APPS_SCRIPT_URL.indexOf("PASTE_YOUR") === 0){
-    statusEl.textContent = "Submissions aren't set up yet — please reach out to us directly instead.";
-    statusEl.className = 'form-status error';
-    return;
-  }
-
   const payload = {
     formType: "activeSuggestion",
     submitterName: form.submitterName.value.trim(),
@@ -1064,15 +1085,16 @@ function openFounderPopup(name){
 }
 
 function applyFilters(){
-  const q = document.getElementById('search').value.toLowerCase();
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const tokens = q ? q.split(/\s+/) : [];
+  document.getElementById('searchTop').classList.toggle('has-text', q.length > 0);
   const sector = document.getElementById('sectorFilter').value;
   const status = document.getElementById('statusFilter').value;
   const techVal = document.getElementById('techFilter').value;
   const sortBy = document.getElementById('sortBy').value;
 
   let list = ALL.filter(row=>{
-    const hay = `${row['Startup Name']} ${row['Founders']} ${row['Key Investors']} ${row['Tagline / Description']} ${row['Tags']} ${row['Underlying Tech']}`.toLowerCase();
-    if(q && !hay.includes(q)) return false;
+    if(tokens.length && !tokens.every(t => ULData.hay(row).includes(t))) return false;
     if(sector && row['Sector'] !== sector) return false;
     if(status && row['Status'] !== status) return false;
     if(techVal && !splitList(row['Underlying Tech']).some(t => t.toLowerCase() === techVal.toLowerCase())) return false;
@@ -1142,9 +1164,12 @@ function buildStats(data){
   `;
 }
 
-function parseCsvText(text){
-  const results = Papa.parse(text, { header: true, skipEmptyLines: true });
-  ALL = results.data.filter(r => clean(r['Startup Name']) && !/^(no|false|0|hide|hidden)$/i.test((r['Visible'] || '').trim()));
+let ledgerSig = '';
+function setLedger(rows){
+  const sig = JSON.stringify(rows);
+  if (sig === ledgerSig) return;                  // cached copy == fresh copy: nothing to redraw
+  ledgerSig = sig;
+  ALL = rows.filter(r => clean(r['Startup Name']) && !/^(no|false|0|hide|hidden)$/i.test((r['Visible'] || '').trim()));
   populateFilters(ALL);
   buildTicker(ALL);
   buildStats(ALL);
@@ -1258,21 +1283,6 @@ function buildFeaturedCarousel(data){
   restartFeatTimer();
 }
 
-function setSyncBadge(state){
-  // state: 'live' | 'offline'
-  const el = document.getElementById('syncBadge');
-  if(!el) return;
-  if(state === 'live'){
-    el.textContent = '● LIVE';
-    el.style.color = '#6fbf73';
-  } else {
-    el.textContent = '● SNAPSHOT';
-    el.style.color = 'var(--paper-dim)';
-    el.title = "Showing the last saved copy of your sheet. Host this file online to enable live syncing.";
-  }
-}
-
-
 // ============================================================
 // STARTUP COMPARISON (up to four companies)
 // ============================================================
@@ -1333,23 +1343,22 @@ document.getElementById('openCompare').addEventListener('click',openCompareModal
 document.getElementById('compareOverlay').addEventListener('click',e=>{if(e.target.id==='compareOverlay')closeCompareModal();});
 
 function loadData(){
-  // Render immediately from the baked-in snapshot so the page is never blank.
-  parseCsvText(FALLBACK_CSV);
-  setSyncBadge('offline');
-
-  // Then quietly try to fetch the live sheet in the background. If this file is
-  // hosted on a real domain, this will usually succeed and silently refresh the data.
-  fetch(CSV_URL, { cache: "no-store" })
-    .then(res => { if(!res.ok) throw new Error(`HTTP ${res.status}`); return res.text(); })
-    .then(text => {
-      if(!text || text.trim().length === 0) throw new Error("Empty response");
-      parseCsvText(text);
-      setSyncBadge('live');
-    })
-    .catch(() => {
-      // Silent fail — the snapshot is already showing, so no need to alarm the user.
-      setSyncBadge('offline');
-    });
+  const TABS = ['ledger', 'founders', 'unlisted'];
+  // 1) Instant: show the copy saved from the last visit while the fresh one loads.
+  const saved = ULData.cached(TABS);
+  if (saved.ledger) setLedger(saved.ledger);
+  if (saved.founders) FOUNDERS_LOOKUP = buildFoundersLookup(saved.founders);
+  // 2) Fresh from Supabase (one request for all three tabs).
+  ULData.load(TABS).then(d => {
+    if (d.founders) FOUNDERS_LOOKUP = buildFoundersLookup(d.founders);
+    if (d.ledger) setLedger(d.ledger);
+    else if (!saved.ledger) {
+      document.getElementById('countPill').textContent = 'OFFLINE';
+      const e = document.getElementById('emptyMsg');
+      e.textContent = "We couldn't load the Ledger just now. Please check your connection and refresh.";
+      e.style.display = 'block';
+    }
+  });
 }
 
 // ============================================================
@@ -1368,10 +1377,6 @@ let missTimer = null;
 function logMissedSearch(term){
   term = term.trim().toLowerCase();
   if(!term || loggedTerms.has(term)) return;
-  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("PASTE_YOUR") === 0){
-    console.warn("Missed-search logging skipped: APPS_SCRIPT_URL not configured yet.");
-    return;
-  }
   loggedTerms.add(term);
   fetch(APPS_SCRIPT_URL, {
     method: "POST",
@@ -1380,8 +1385,25 @@ function logMissedSearch(term){
   }).catch(()=>{}); // fail silently, don't block the UI
 }
 
+// Deep links: ledger.html#q=ola opens with that search applied (used by the home page search).
+(function(){
+  const m = location.hash.match(/^#q=(.*)$/);
+  if(m){ try{ document.getElementById('search').value = decodeURIComponent(m[1]); }catch(e){} }
+})();
 loadData();
-loadFoundersData();
+
+// Search bar extras: clear button, "/" to focus, and keep the filter row stuck right under it.
+const searchEl = document.getElementById('search');
+document.getElementById('searchClear').addEventListener('click', ()=>{ searchEl.value = ''; applyFilters(); searchEl.focus(); });
+document.addEventListener('keydown', e=>{
+  if(e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||'')) && !document.querySelector('.overlay.open')){ e.preventDefault(); searchEl.focus(); searchEl.select(); }
+});
+(function(){
+  const bar = document.getElementById('searchTop');
+  const setH = ()=> document.documentElement.style.setProperty('--ul-search-h', bar.offsetHeight + 'px');
+  setH();
+  if(window.ResizeObserver) new ResizeObserver(setH).observe(bar); else addEventListener('resize', setH);
+})();
 
 document.getElementById('search').addEventListener('input', applyFilters);
 document.getElementById('sectorFilter').addEventListener('change', applyFilters);
@@ -1389,7 +1411,6 @@ document.getElementById('techFilter').addEventListener('change', applyFilters);
 document.getElementById('statusFilter').addEventListener('change', applyFilters);
 document.getElementById('sortBy').addEventListener('change', applyFilters);
 </script>
-<script src="config.js"></script>
 <script src="ledger-extras.js" defer></script>
 <script src="site.js" defer></script>
 </body>

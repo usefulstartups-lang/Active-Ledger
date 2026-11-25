@@ -4,7 +4,7 @@ header{padding-top:72px}
 header h1{font-size:clamp(42px,7.4vw,84px);line-height:.98;letter-spacing:-.025em}
 .sub{font-size:17px;max-width:600px}
 .stat b{font-weight:400;font-size:30px}
-.controls{top:var(--ul-nav-h,0px);background:rgba(11,18,32,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.controls{top:calc(var(--ul-nav-h,0px) + var(--ul-search-h,0px));background:rgba(11,18,32,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 input[type="text"],select{border-radius:8px;transition:border-color .2s,box-shadow .2s}
 input[type="text"]:focus,select:focus{box-shadow:0 0 0 3px rgba(217,164,65,.16)}
 .grid{background:none;border:0;gap:16px}

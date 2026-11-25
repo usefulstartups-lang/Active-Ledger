@@ -1,10 +1,7 @@
-/* Shared site shell: nav + footer on every page, plus Home/About/Team/Contact/Terms/Privacy,
-   all driven by Google Sheet tabs. Edit a cell in the Sheet -> the site updates. */
+/* Shared site shell: nav + footer on every page, plus Home/About/Team/Contact/Terms/Privacy.
+   Content is controlled from the Google Sheet; the Sheet is synced into Supabase and read
+   through data.js (ULData). If a tab is empty or unreachable, the built-in defaults below show. */
 (function(){
-// ====== CONFIG: paste each new tab's gid (the number after "gid=" in its published link) ======
-const SHEET="https://docs.google.com/spreadsheets/d/e/2PACX-1vSnzz7ZtIZdVOzq9FJLG0x1Hz2Y6XYNkTsveYm_sJheBoPIP-jhL27SBGl57CLMJirXvzjSQ4X-CMmB/pub";
-const GIDS={ledger:"0",settings:"2125262912",nav:"763580476",pages:"1940886012",team:"2027713606",highlights:"1687804525"};
-// Until a gid is filled in, the built-in defaults below are used, so the site works on day one.
 
 const DEF={
 settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, in one place.",
@@ -55,19 +52,9 @@ function md(t){const o=[];let ul=false;String(t||"").split(/\r?\n/).forEach(l=>{
  if(ul)o.push("</ul>");return o.join("")}
 function drive(u){u=clean(u);if(!u)return"";const m=u.match(/\/d\/([\w-]+)/)||u.match(/id=([\w-]+)/);return m?`https://drive.google.com/thumbnail?id=${m[1]}&sz=w600`:u}
 const initials=n=>String(n||"?").split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
-function loadScript(src){return new Promise((res,rej)=>{if(window.Papa)return res();const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
-
-function tab(name){
- const gid=GIDS[name],def=DEF[name],ck="ul_tab_"+name;
- if(gid==="")return Promise.resolve(null);
- return loadScript("https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js")
-  .then(()=>fetch(`${SHEET}?gid=${gid}&single=true&output=csv`,{cache:"no-store"}))
-  .then(r=>{if(!r.ok)throw 0;return r.text()})
-  .then(t=>{const d=Papa.parse(t,{header:true,skipEmptyLines:true}).data;try{localStorage.setItem(ck,JSON.stringify(d))}catch(e){}return d})
-  .catch(()=>{try{return JSON.parse(localStorage.getItem(ck))}catch(e){return null}});
-}
-async function get(name){const d=await tab(name);return d&&d.length?d:null}
-async function getSettings(){const d=await get("settings");const s=Object.assign({},DEF.settings);
+const SITE_TABS=["settings","nav","pages","team","highlights"];
+const rows=d=>d&&d.length?d:null;
+function getSettings(d){const s=Object.assign({},DEF.settings);
  if(d)d.forEach(r=>{const k=clean(r.Key);if(k&&clean(r.Value))s[k]=r.Value.trim()});return s}
 
 // ====== shell ======
@@ -161,6 +148,9 @@ async function homePage(S,P,H){
  const steps=sections(P,"steps");
  const out=`<section class="ul-hero"><div class="ul-aurora"></div><div class="ul-wrap"><div class="ul-eyebrow">${esc(S.hero_eyebrow)}</div>
  <h1>${words(S.hero_title,0)} <em>${words(S.hero_accent,S.hero_title.split(/\s+/).length)}</em></h1><p class="ul-lead">${esc(S.hero_subtext)}</p>
+ <form class="ul-search" id="ulSearch" role="search" autocomplete="off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <input id="ulSearchIn" type="text" placeholder="Search startups, founders or investors…" aria-label="Search the Ledger" aria-autocomplete="list" aria-controls="ulSugg" enterkeyhint="search"><button type="submit">Search</button>
+  <div class="ul-sugg" id="ulSugg" role="listbox" hidden></div></form>
  <div class="ul-cta"><a class="ul-btn" href="${esc(url(S.cta1_url))}">${esc(S.cta1_label)}</a>${S.cta2_label?`<a class="ul-btn ghost" href="${esc(url(S.cta2_url))}">${esc(S.cta2_label)}</a>`:""}</div><div class="ul-tape" id="ulTape" hidden><div class="ul-tape-in" id="ulTapeIn"></div></div></div></section>
  <section class="ul-sec ul-pulse" id="ulPulse" hidden><div class="ul-wrap"><div class="ul-head"><h2>What's new in the Ledger</h2><a class="ul-link" href="ledger.html">Open the Ledger →</a></div>
  <div class="ul-pulse-grid"><a class="ul-week rv" id="ulWeek" href="ledger.html"></a>
@@ -175,10 +165,11 @@ async function homePage(S,P,H){
  return out;
 }
 async function homeData(){
+ const cached=ULData.cached(["ledger"]).ledger;
+ if(cached)wireSearch(cached.filter(r=>clean(r["Startup Name"])&&vis(r)));
  let rows=[];
- try{await loadScript("https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js");
-  const t=await fetch(`${SHEET}?gid=${GIDS.ledger}&single=true&output=csv`,{cache:"no-store"}).then(r=>r.text());
-  rows=Papa.parse(t,{header:true,skipEmptyLines:true}).data.filter(r=>clean(r["Startup Name"])&&vis(r))}catch(e){}
+ try{rows=((await ULData.load(["ledger"])).ledger||[]).filter(r=>clean(r["Startup Name"])&&vis(r))}catch(e){}
+ wireSearch(rows);
  const tp=$("#ulTapeIn");
  if(tp&&rows.length){const h=rows.slice(0,80).map(r=>`<span><b>${esc(r["Startup Name"])}</b>${esc(clean(r.Sector))}${clean(r.Headquarters)?" · "+esc(pc(r.Headquarters)):""}</span>`).join("");tp.innerHTML=h+h;$("#ulTape").hidden=false;
   const speed=()=>{const w=tp.scrollWidth/2;if(w)tp.style.animationDuration=Math.max(w/38,24)+"s"};speed();
@@ -196,6 +187,36 @@ async function homeData(){
   $("#ulPulse").hidden=false}
  try{if(typeof SUPABASE_URL!=="undefined"){const a=await fetch(`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,summary&order=published_at.desc&limit=3`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}}).then(r=>r.json());
   if(Array.isArray(a)&&a.length){$("#ulNews").hidden=false;$("#ulNewsGrid").innerHTML=a.map(x=>`<a class="ul-card rv" href="${esc(url(x.link))}" target="_blank" rel="noopener"><span class="ul-meta">${esc(x.source)}</span><h3 style="font-size:18px">${esc(x.title)}</h3><p>${esc((x.summary||"").slice(0,120))}</p></a>`).join("")}}}catch(e){}
+}
+// ====== home search: live suggestions from the Ledger, Enter opens the Ledger with the search applied ======
+let SEARCH_ROWS=[],searchWired=false;
+function wireSearch(rows){
+ SEARCH_ROWS=rows.map(r=>({r,name:r["Startup Name"].trim(),hay:ULData.hay(r)}));
+ if(searchWired)return;const f=$("#ulSearch");if(!f)return;searchWired=true;
+ const inp=$("#ulSearchIn"),box=$("#ulSugg");let act=-1,list=[];
+ const close=()=>{box.hidden=true;act=-1;inp.removeAttribute("aria-activedescendant")};
+ const go=(q,name)=>{location.href="ledger.html#"+(name?"s="+encodeURIComponent(name):"q="+encodeURIComponent(q))};
+ const paint=()=>{box.querySelectorAll("[role=option]").forEach((e,i)=>{e.classList.toggle("on",i===act);e.setAttribute("aria-selected",i===act)});
+  if(act>=0)inp.setAttribute("aria-activedescendant","ulSg"+act)};
+ const show=()=>{const q=inp.value.trim().toLowerCase();if(q.length<1||!SEARCH_ROWS.length){close();return}
+  const toks=q.split(/\s+/);
+  list=SEARCH_ROWS.filter(x=>toks.every(t=>x.hay.includes(t)))
+   .sort((a,b)=>(b.name.toLowerCase().startsWith(q)-a.name.toLowerCase().startsWith(q))||(b.name.toLowerCase().includes(q)-a.name.toLowerCase().includes(q))||a.name.localeCompare(b.name));
+  const n=list.length;list=list.slice(0,6);act=-1;
+  box.innerHTML=list.length?list.map((x,i)=>`<div role="option" id="ulSg${i}" data-i="${i}"><b>${esc(x.name)}</b><span>${esc([clean(x.r.Sector),pc(clean(x.r.Headquarters))].filter(Boolean).join(" · "))}</span></div>`).join("")
+    +(n>list.length?`<div class="more" data-all="1">See all ${n} results in the Ledger →</div>`:"")
+   :`<div class="none">No match yet. Press Enter to search the whole Ledger.</div>`;
+  box.hidden=false};
+ inp.addEventListener("input",show);inp.addEventListener("focus",show);
+ inp.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){close();return}
+  if(box.hidden||!list.length)return;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();act=(act+(e.key==="ArrowDown"?1:-1)+list.length)%list.length;paint()}
+  else if(e.key==="Enter"&&act>=0){e.preventDefault();go("",list[act].name)}});
+ box.addEventListener("mousedown",e=>{e.preventDefault();const o=e.target.closest("[data-i],[data-all]");if(!o)return;
+  o.dataset.all?go(inp.value.trim()):go("",list[+o.dataset.i].name)});
+ f.addEventListener("submit",e=>{e.preventDefault();const q=inp.value.trim();if(q)go(q);else location.href="ledger.html"});
+ document.addEventListener("click",e=>{if(!f.contains(e.target))close()});
 }
 function fx(){
  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);e.target.querySelectorAll&&e.target.querySelectorAll("b[data-v]").forEach(count)}}),{threshold:.12});
@@ -293,7 +314,9 @@ async function boot(){
 }
 async function boot0(){
  head();themes();
- const [S,nav,pages,team,hl]=await Promise.all([getSettings(),get("nav"),get("pages"),get("team"),get("highlights")]);
+ const T0=await ULData.load(SITE_TABS);
+ const S=getSettings(T0.settings),nav=rows(T0.nav),pages=rows(T0.pages),team=rows(T0.team),hl=rows(T0.highlights);
+ window.ULSite={url:(S.site_url||(typeof SITE_URL!=="undefined"?SITE_URL:"")).replace(/\/+$/,""),name:S.site_name};
  const NAV=nav||DEF.nav,P=pages||DEF.pages;
  shell(S,NAV);
  const key=document.body.dataset.page;if(!key)return;

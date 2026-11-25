@@ -1,6 +1,3 @@
-// Change this to your website's address (used in the share message).
-const SITE_URL = 'https://usefulstartups.com/';
-
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Which news tab is showing: 'general' (startup & business news) or 'startup' (news on Ledger startups).
@@ -161,7 +158,7 @@ function renderComment(c) {
 }
 
 function buildShareMessage(article) {
-  return `${article.title}\n${article.link}\n\nFor more such content, visit Useful Startups: ${SITE_URL}`;
+  return `${article.title}\n${article.link}\n\nFor more such content, visit Useful Startups: ${SITE_URL}/`;
 }
 
 function handleShare(platform, article, btnEl) {
