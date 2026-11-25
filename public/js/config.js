@@ -10,4 +10,4 @@ const SITE_URL = 'https://usefulstartups.in';
 
 // The Google Apps Script "web app" URL that receives the Contact form, "Suggest a startup" and missed searches.
 // Paste the /exec URL you get after deploying google-sheet/forms.gs (see README, step 3).
-const FORMS_URL = '';
+const FORMS_URL = 'https://script.google.com/macros/s/AKfycbz0n524rYWLuc6ZpwmsnhA4eW27wB6bBTUgunFR3yAA0FLUxquvwtqEzOdA4HeaNoHCxw/exec';
