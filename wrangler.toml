@@ -1,0 +1,4 @@
+# Cloudflare Pages: static site in public/, serverless functions in functions/ (the coffee payments).
+name = "useful-startups"
+pages_build_output_dir = "public"
+compatibility_date = "2025-01-01"
