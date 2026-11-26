@@ -15,8 +15,12 @@
 
 
   // ---------- tidy-up applied to the Ledger on the way in, so EVERY page sees the same clean data ----------
-  var BLANK_RE = /^(-+|n\/?a|na|not available|not applicable|not specified|unknown|none|null|nil|tbd|undisclosed)$/i;
-  var isBlank = function (v) { v = String(v == null ? "" : v).trim(); return !v || BLANK_RE.test(v); };
+  // "Not available", "Not  Available." (double space, full stop), "N/A", "unknown", "not specified (stealth)" ... all count as "no data"
+  var BLANK_RE = /^(n ?\/? ?a|nil|null|none|tbd|unknown|undisclosed|not (available|applicable|specified|disclosed|provided|known|found|mentioned|sure|yet)( .*)?)$/;
+  var isBlank = function (v) {
+    v = String(v == null ? "" : v).toLowerCase().replace(/[^a-z\/ ]+/g, " ").replace(/\s+/g, " ").trim();
+    return !v || BLANK_RE.test(v);
+  };
 
   var STATES = ["andhra pradesh","arunachal pradesh","assam","bihar","chhattisgarh","goa","gujarat","haryana","himachal pradesh","jharkhand","karnataka","kerala","madhya pradesh","maharashtra","manipur","meghalaya","mizoram","nagaland","odisha","punjab","rajasthan","sikkim","tamil nadu","tamilnadu","telangana","tripura","uttar pradesh","uttarakhand","west bengal","jammu and kashmir","jammu & kashmir","ladakh","puducherry","chandigarh","andaman and nicobar"];
   var ALIAS = { "bangalore": "Bengaluru", "bengaluru urban": "Bengaluru", "bengalooru": "Bengaluru", "bangaluru": "Bengaluru", "bengaluru rural": "Bengaluru",
@@ -93,6 +97,17 @@
 
   window.ULData = {
     isBlank: isBlank, city: cityOf,
+    // Where the contact / suggestion / missed-search forms are sent. js/config.js FORMS_URL, or the Sheet's Settings tab (key: forms_url).
+    formsUrl: function () {
+      if (typeof FORMS_URL !== "undefined" && FORMS_URL) return Promise.resolve(FORMS_URL);
+      return window.ULData.load(["settings"]).then(function (d) {
+        var u = ""; (d.settings || []).forEach(function (r) {
+          var k = String(r.Key || "").trim(), v = String(r.Value || "").trim();
+          if ((k === "forms_url" || k === "contact_form_url") && v) u = v;
+        });
+        return /^https:\/\//.test(u) ? u : "";
+      }).catch(function () { return ""; });
+    },
     hay: function (row) { return HAY.map(function (k) { var v = row[k]; return v && v !== "-" ? v : ""; }).join(" ").toLowerCase(); },
     cached: function (tabs) {
       var o = {}; tabs.forEach(function (t) { var c = readCache(t); o[t] = c && c.length ? tidy(t, c) : null; }); return o;

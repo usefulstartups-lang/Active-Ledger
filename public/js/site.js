@@ -14,7 +14,7 @@ settings:{site_name:"Useful Startups",tagline:"India's startup ledger and news, 
  terms_title:"Terms of Use",terms_intro:"The rules for using this website.",
  privacy_title:"Privacy Policy",privacy_intro:"What we collect and why.",
  legal_updated:"",contact_email:"hello@example.com",contact_phone:"",address:"",
- linkedin:"",twitter:"",instagram:"",facebook:"",youtube:"",discord:"",blog:"",whatsapp:"",contact_form_url:"",logo_url:"img/logo-mark.png",
+ linkedin:"",twitter:"",instagram:"",facebook:"",youtube:"",discord:"",blog:"",whatsapp:"",contact_form_url:"",forms_url:"",logo_url:"img/logo-mark.png",
  oak_show:"yes",oak_name:"Oak Sprouts",oak_url:"https://oaksprouts.com",oak_logo:"img/oaksprouts-logo.png",oak_cta:"Visit oaksprouts.com",
  oak_text:"A startup of our co-founders that manages startup portfolios, with startup investing, seed funding, angel investing and unlisted opportunities.",
  oak_badge:"Useful Startups is part of the Oak Sprouts portfolio",
@@ -141,7 +141,7 @@ function wireForm(S){
  const bad=()=>{st.style.color="#C1543C";st.textContent="Couldn't send that. Please email us directly."};
  f.onsubmit=e=>{e.preventDefault();if(f.hp.value)return ok();if(Date.now()-t0<2500){st.style.color="#C1543C";st.textContent="Please take a moment to fill out the form.";return}
   const d={formType:"contact",name:f.fname.value.trim(),email:f.femail.value.trim(),message:f.fmsg.value.trim()};
-  const FU=S.contact_form_url||(typeof FORMS_URL!=="undefined"?FORMS_URL:"");if(FU){st.textContent="Sending…";fetch(FU,{method:"POST",body:JSON.stringify(d),headers:{"Content-Type":"text/plain;charset=utf-8"}}).then(r=>r.json()).then(j=>j.ok?ok():bad()).catch(bad)}
+  const FU=S.forms_url||S.contact_form_url||(typeof FORMS_URL!=="undefined"?FORMS_URL:"");if(FU){st.textContent="Sending…";fetch(FU,{method:"POST",body:JSON.stringify(d),headers:{"Content-Type":"text/plain;charset=utf-8"}}).then(r=>r.json()).then(j=>j.ok?ok():bad()).catch(bad)}
   else location.href="mailto:"+S.contact_email+"?subject="+encodeURIComponent("Message from "+d.name)+"&body="+encodeURIComponent(d.message+"\n\n"+d.email);};
 }
 
@@ -180,7 +180,7 @@ async function homeData(){
   wk.innerHTML=`<span class="ul-meta">Startup of the week</span><div class="ul-wk-top">${wl?`<img src="${esc(wl)}" alt="" onerror="this.remove()">`:`<div class="ul-wk-fb">${esc(initials(wn))}</div>`}<div><h3>${esc(wn)}</h3><div class="ul-wk-sub">${esc([clean(w.Sector),pc(clean(w.Headquarters)),clean(w["Founded In"])?"est. "+clean(w["Founded In"]):""].filter(Boolean).join(" · "))}</div></div></div><p>${esc(clean(w["Tagline / Description"]))}</p>${edge?`<blockquote>${esc(edge)}</blockquote>`:""}<div class="ul-wk-foot"><span>${esc(clean(w["Funding Amount"])||"Funding undisclosed")}${clean(w["Funding Stage"]||w["Funding stage"])?" · "+esc(clean(w["Funding Stage"]||w["Funding stage"])):""}</span><span class="ul-more">Open in the Ledger →</span></div>`;
   const dated=rows.filter(r=>Date.parse(r["Added On"])),rec=(dated.length?dated.slice().sort((a,b)=>Date.parse(b["Added On"])-Date.parse(a["Added On"])):rows.slice().reverse()).slice(0,4);
   $("#ulRecent").innerHTML=rec.map(r=>`<a class="ul-rec" href="ledger.html#s=${T(r)}"><b>${esc(r["Startup Name"])}</b><span>${esc([clean(r.Sector),pc(clean(r.Headquarters))].filter(Boolean).join(" · "))}</span></a>`).join("");
-  const c={};rows.forEach(r=>{const x=clean(r.Sector);if(x)c[x]=(c[x]||0)+1});const top=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,5),mx=top.length?top[0][1]:1;
+  const c={};rows.forEach(r=>{const x=clean(r.Sector);if(x&&!ULData.isBlank(x))c[x]=(c[x]||0)+1});const top=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,5),mx=top.length?top[0][1]:1;
   $("#ulTrend").innerHTML=top.map(([n,k])=>`<div class="ul-bar"><span>${esc(n)}</span><em>${k}</em><i style="--w:${(k/mx*100).toFixed(0)}%"></i></div>`).join("");
   $("#ulPulse").hidden=false}
  try{if(typeof SUPABASE_URL!=="undefined"){const a=await fetch(`${SUPABASE_URL}/rest/v1/articles?select=title,link,source,summary&order=published_at.desc&limit=3`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}}).then(r=>r.json());
