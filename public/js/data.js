@@ -15,8 +15,8 @@
 
 
   // ---------- tidy-up applied to the Ledger on the way in, so EVERY page sees the same clean data ----------
-  // "Not available", "Not  Available." (double space, full stop), "N/A", "unknown", "not specified (stealth)" ... all count as "no data"
-  var BLANK_RE = /^(n ?\/? ?a|nil|null|none|tbd|unknown|undisclosed|not (available|applicable|specified|disclosed|provided|known|found|mentioned|sure|yet)( .*)?)$/;
+  // "Not available", "Not publicly available", "Not  Available." , "N/A", "unknown", "no data" ... all count as "no data"
+  var BLANK_RE = /^(n ?\/? ?a|nil|null|none|tbd|unknown|undisclosed|unavailable|no (data|info|information|details)( .*)?|not .*\b(available|applicable|specified|disclosed|provided|known|found|mentioned|public|publicly|sure|yet|shared|stated|listed|reported)\b.*)$/;
   var isBlank = function (v) {
     v = String(v == null ? "" : v).toLowerCase().replace(/[^a-z\/ ]+/g, " ").replace(/\s+/g, " ").trim();
     return !v || BLANK_RE.test(v);
