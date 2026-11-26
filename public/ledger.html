@@ -953,7 +953,7 @@ document.getElementById('submitForm').addEventListener('submit', function(e){
     notes: form.notes.value.trim(),
   };
 
-  if(!FORMS_URL){
+  if(!FORMS_ENDPOINT){
     statusEl.textContent = "Submissions are switched off at the moment. Please email us instead.";
     statusEl.className = 'form-status error';
     return;
@@ -963,7 +963,7 @@ document.getElementById('submitForm').addEventListener('submit', function(e){
   statusEl.textContent = '';
   statusEl.className = 'form-status';
 
-  fetch(FORMS_URL, {
+  fetch(FORMS_ENDPOINT, {
     method: "POST",
     body: JSON.stringify(payload),
     headers: { "Content-Type": "text/plain;charset=utf-8" } // avoids CORS preflight issues with Apps Script
@@ -1366,16 +1366,18 @@ function loadData(){
 // Whenever a search returns zero results, the term gets POSTed
 // to a Google Apps Script Web App, which appends it to a
 // "Missed Searches" tab in your Google Sheet.
-// Sent to FORMS_URL (js/config.js) and saved by google-sheet/forms.gs.
+// Sent to the forms web app (Sheet > Settings > forms_url, or FORMS_URL in js/config.js) and saved by google-sheet/forms.gs.
+let FORMS_ENDPOINT = (typeof FORMS_URL !== 'undefined' && FORMS_URL) || '';
+ULData.formsUrl().then(u => { if(u) FORMS_ENDPOINT = u; });
 // ============================================================
 const loggedTerms = new Set();
 let missTimer = null;
 
 function logMissedSearch(term){
   term = term.trim().toLowerCase();
-  if(!FORMS_URL || !term || loggedTerms.has(term)) return;
+  if(!FORMS_ENDPOINT || !term || loggedTerms.has(term)) return;
   loggedTerms.add(term);
-  fetch(FORMS_URL, {
+  fetch(FORMS_ENDPOINT, {
     method: "POST",
     body: JSON.stringify({ keyword: term }),
     headers: { "Content-Type": "text/plain;charset=utf-8" } // avoids CORS preflight issues with Apps Script
