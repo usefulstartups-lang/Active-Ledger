@@ -35,3 +35,15 @@
 .ugs-c p{margin:0;font-size:13.5px;line-height:1.5;color:var(--g-dim)}
 .ugs-none{padding:30px 0;color:var(--g-dim);font-size:15px;line-height:1.6}
 .ugs-none a{color:var(--g-gold)}
+
+/* compact: sits inside the Ledger hero, right above the KPI numbers */
+.ugs-compact{margin:22px 0 8px;max-width:500px}
+.ugs-compact .ugs{padding:4px 4px 4px 14px;gap:8px}
+.ugs-compact .ugs>svg{width:17px;height:17px}
+.ugs-compact .ugs input,.ugs-compact .ugs input[type="text"]{font-size:14.5px;padding:9px 0!important}
+.ugs-compact .ugs button{padding:9px 18px;font-size:13px}
+.ugs-compact .ugs-dd{border-radius:14px}
+
+/* while the search menu is open, whatever sits underneath it steps out of the way */
+.ul-cta,.ul-tape,.stat-row,.suggest-btn{transition:opacity .15s}
+html.ugs-open .ul-cta,html.ugs-open .ul-tape,html.ugs-open .stat-row,html.ugs-open .suggest-btn{opacity:0!important;pointer-events:none!important}
