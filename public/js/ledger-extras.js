@@ -223,7 +223,7 @@ function draw(){
   const by={},cities={},unplaced={};
   Object.keys(TILES).forEach(k=>by[k]={rows:[],sectors:{}});
   ALL.forEach(r=>{
-    const hq=cl(r["Headquarters"]);const s=stateOf(hq);
+    const hq=cl(r["Headquarters"]);const s=stateOf(cl(r._hq)||hq);
     if(!s){if(hq)unplaced[hq]=(unplaced[hq]||0)+1;return}
     by[s].rows.push(r);
     const sc=cl(r["Sector"]);if(sc)by[s].sectors[sc]=(by[s].sectors[sc]||0)+1;

@@ -55,7 +55,10 @@ const initials=n=>String(n||"?").split(/\s+/).map(w=>w[0]).slice(0,2).join("").t
 const SITE_TABS=["settings","nav","pages","team","highlights"];
 const rows=d=>d&&d.length?d:null;
 function getSettings(d){const s=Object.assign({},DEF.settings);
- if(d)d.forEach(r=>{const k=clean(r.Key);if(k&&clean(r.Value))s[k]=r.Value.trim()});return s}
+ if(d)d.forEach(r=>{const k=clean(r.Key);if(k&&clean(r.Value))s[k]=r.Value.trim()});
+ // Older Settings rows hold a bare file name like "logo-mark.png"; images now live in img/
+ ["logo_url","oak_logo"].forEach(k=>{if(/^[\w.-]+\.(png|svg|jpe?g|webp|gif|ico)$/i.test(s[k]||""))s[k]="img/"+s[k]});
+ return s}
 
 // ====== shell ======
 function head(){

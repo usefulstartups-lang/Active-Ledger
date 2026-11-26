@@ -26,8 +26,14 @@
     var ledger = (d.ledger || []).filter(function (r) { return clean(r["Startup Name"]) && visible(r); });
     var startups = ledger.map(function (r) {
       var name = clean(r["Startup Name"]);
-      var hay = [ULData.hay(r), r["Sector"], r["Headquarters"], r["Funding Stage"], r["Business Model"], r["Primary Competition"]].join(" ").toLowerCase();
+      var hay = [ULData.hay(r), r["Sector"], r["Headquarters"], r["Funding Stage"], r["Business Model"], r["Primary Competition"], r._hq].join(" ").toLowerCase();
       return { type: "startup", title: name, sub: [clean(r["Sector"]), pc(clean(r["Headquarters"]))].filter(Boolean).join(" · "), snip: clean(r["Tagline / Description"]), url: "ledger.html#s=" + encodeURIComponent(name), hay: hay };
+    });
+
+    var cmap = {};
+    ledger.forEach(function (r) { var c = clean(r["Headquarters"]); if (c) cmap[c] = (cmap[c] || 0) + 1; });
+    var cities = Object.keys(cmap).map(function (c) {
+      return { type: "city", title: c, sub: cmap[c] + " startup" + (cmap[c] === 1 ? "" : "s") + " · filter the Ledger", snip: "", url: "ledger.html#city=" + encodeURIComponent(c), hay: c.toLowerCase() };
     });
 
     var fmap = {};
@@ -59,7 +65,7 @@
       var n = clean(r.Name); if (!n) return;
       pages.push({ type: "page", title: pc(n), sub: [clean(r.Role), "Team"].filter(Boolean).join(" · "), snip: plain(r.Bio).slice(0, 140), url: "team.html", hay: (n + " " + r.Role + " " + r.Bio).toLowerCase() });
     });
-    return { startups: startups, founders: founders, pages: pages };
+    return { startups: startups, cities: cities, founders: founders, pages: pages };
   }
 
   function getIndex() {
@@ -81,8 +87,8 @@
 
   function localSearch(q, lim) {
     var toks = tokens(q), ql = q.toLowerCase().trim();
-    if (!IDX || !toks.length) return { startups: { total: 0, items: [] }, founders: { total: 0, items: [] }, pages: { total: 0, items: [] } };
-    return { startups: rank(IDX.startups, toks, ql, lim.startups), founders: rank(IDX.founders, toks, ql, lim.founders), pages: rank(IDX.pages, toks, ql, lim.pages) };
+    if (!IDX || !toks.length) return { cities: { total: 0, items: [] }, startups: { total: 0, items: [] }, founders: { total: 0, items: [] }, pages: { total: 0, items: [] } };
+    return { cities: rank(IDX.cities, toks, ql, lim.cities || 2), startups: rank(IDX.startups, toks, ql, lim.startups), founders: rank(IDX.founders, toks, ql, lim.founders), pages: rank(IDX.pages, toks, ql, lim.pages) };
   }
 
   var newsSeq = 0;
@@ -101,12 +107,14 @@
       }).catch(function () { return []; });
   }
 
-  var LABELS = { startups: "Startups", founders: "Founders", pages: "Pages and team", news: "News" };
+  var LABELS = { cities: "Cities", startups: "Startups", founders: "Founders", pages: "Pages and team", news: "News" };
 
   /* ---------- dropdown search box ---------- */
   function mount(el, opts) {
     if (!el || el.__ugs) return; el.__ugs = true; opts = opts || {};
     el.classList.add("ugs-slot");
+    if (el.hasAttribute("data-compact")) el.classList.add("ugs-compact");
+    if (el.dataset.placeholder) opts.placeholder = el.dataset.placeholder;
     el.innerHTML = '<form class="ugs" role="search" autocomplete="off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
       '<input type="text" aria-label="Search the whole website" aria-autocomplete="list" enterkeyhint="search" placeholder="' + esc(opts.placeholder || "Search startups, founders, news, pages…") + '"><button type="submit">Search</button>' +
       '<div class="ugs-dd" role="listbox" hidden></div></form>';
@@ -117,11 +125,11 @@
 
     function opts_() { return [].slice.call(dd.querySelectorAll("[data-o]")); }
     function paint() { opts_().forEach(function (e, i) { e.classList.toggle("on", i === act); e.setAttribute("aria-selected", i === act); if (i === act) e.scrollIntoView({ block: "nearest" }); }); }
-    function close() { dd.hidden = true; act = -1; }
+    function close() { dd.hidden = true; act = -1; document.documentElement.classList.remove("ugs-open"); }
     function render() {
       var q = inp.value.trim(); if (!q) { close(); return; }
       var r = localSearch(q, { startups: 4, founders: 2, pages: 3 }), h = "", n = 0, tot = 0;
-      ["startups", "founders", "pages"].forEach(function (g) {
+      ["cities", "startups", "founders", "pages"].forEach(function (g) {
         tot += r[g].total;
         if (!r[g].items.length) return;
         h += '<div class="ugs-h">' + LABELS[g] + "</div>";
@@ -132,7 +140,7 @@
         news.slice(0, 3).forEach(function (x) { h += '<a class="ugs-o" data-o role="option" href="' + esc(safeUrl(x.url)) + '" target="_blank" rel="noopener"><b>' + esc(x.title) + "</b><span>" + esc(x.sub) + "</span></a>"; n++; });
       }
       h = (n ? h : '<div class="ugs-n">No quick matches yet.</div>') + '<a class="ugs-f" data-o data-all href="search.html?q=' + encodeURIComponent(q) + '">See all results for “' + esc(q) + '” →</a>';
-      dd.innerHTML = h; dd.hidden = false; act = -1;
+      dd.innerHTML = h; dd.hidden = false; act = -1; document.documentElement.classList.add("ugs-open");
     }
     function show() {
       render();
@@ -170,7 +178,7 @@
     out.innerHTML = '<div class="ugs-none">Searching…</div>';
     function paint(news) {
       var r = localSearch(q, { startups: 24, founders: 12, pages: 12 }), h = "", any = false;
-      [["startups", r.startups.total, r.startups.items], ["founders", r.founders.total, r.founders.items], ["news", news ? news.length : 0, news || []], ["pages", r.pages.total, r.pages.items]].forEach(function (g) {
+      [["cities", r.cities.total, r.cities.items], ["startups", r.startups.total, r.startups.items], ["founders", r.founders.total, r.founders.items], ["news", news ? news.length : 0, news || []], ["pages", r.pages.total, r.pages.items]].forEach(function (g) {
         if (!g[2].length) return; any = true;
         h += '<section class="ugs-g"><h2>' + LABELS[g[0]] + " <small>" + g[1] + (g[1] > g[2].length ? ", showing " + g[2].length : "") + '</small></h2><div class="ugs-list">' + g[2].map(card).join("") + "</div></section>";
       });
