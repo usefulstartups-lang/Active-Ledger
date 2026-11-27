@@ -1,0 +1,12 @@
+# Copy of the Cloudflare settings for the case where Cloudflare builds from the "scripts" folder.
+# Paths point one folder up. The same settings live in the top-level wrangler.toml.
+# "name" must be exactly your Cloudflare project name.
+name = "useful-startups"
+main = "../worker/index.js"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "../public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+run_worker_first = ["/api/*"]
