@@ -1,5 +1,3 @@
-# Cloudflare deploy settings (Cloudflare runs: npx wrangler deploy)
-# "name" MUST be exactly the name of your Cloudflare project (shown at the top of the project page).
 name = "useful-startups"
 main = "worker/index.js"
 compatibility_date = "2025-01-01"
